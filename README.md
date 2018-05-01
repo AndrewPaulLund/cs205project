@@ -118,7 +118,8 @@ both DNA and RNA of sample 1 below:
 
 |  Index File Distribution  | Heterogeneity |
 |:---:|:---:|
-|![dna1](report_images/DNA_Distribution.png)  |  ![dna2](report_images/DNA_Heterogeneity.png)|
+|![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
+|![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
 
 ---
 
