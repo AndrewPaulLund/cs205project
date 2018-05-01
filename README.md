@@ -159,10 +159,10 @@ analysis.
 
 **1. Binning**
 
-|  Ideal Bin Size  | Binning Speedup |
+|  DNA  | RNA |
 |:---:|:---:|
-|![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning3.png)|
-|![bin2](report_images/binning2.png)  |  ![bin4](report_images/binning4.png)|
+|![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning2.png)|
+|![bin2](report_images/binning3.png)  |  ![bin4](report_images/binning4.png)|
 
 
 ---
