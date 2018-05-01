@@ -116,9 +116,9 @@ number of reads (genome sequence strings). This makes sequentially processing
 the alignment files very uneven. This unpredictable sizing is displayed for
 both DNA and RNA of sample 1 below:
 
-|    Distribution      |  Heterogeneity |
+|    |  |
 |:------------------- :|:--------------:|
-|![](report_images/DNA_Distribution)  |  ![](report_images/DNA_Heterogeneity)|
+|![](report_images/DNA_Distribution.png)  |  ![](report_images/DNA_Heterogeneity.png)|
 
 ---
 
