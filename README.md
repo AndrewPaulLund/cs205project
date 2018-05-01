@@ -6,6 +6,10 @@ Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
 **This README is our project website and serves as the final report for
 the work we did throughout the semester.**
 
+- Samtools source code is found [here](https://github.com/samtools)
+- Evaluation data, modified source code, batch scripts, and visualization
+notebooks are found in this repository
+
 ---
 
 ### Description of problem and the need for HPC and/or Big Data
@@ -61,4 +65,73 @@ and RNA through big data and high throughput computing parallelization
 
 ---
 
-### Description of solution and comparison with existing work on the problem
+### Description of solution and comparison with existing work
+
+Our project evaluated four primary speedup techniques for speeding up SNP
+analysis:
+1. Binning - distributing DNA & RNA reads (sequence
+strings) into “bins” amongst cores
+2. OpenMP - shared-memory technique to reduce execution time
+3. MPI - distributed-memory technique to reduce execution timely
+4. Load balancing - reduce heterogeneity by sorting genome alignment index files
+
+Each of these techniques and their results are described in detail in the
+following sections.
+
+A source we used for our initial profiling analysis is Weeks and Luecke's 2017
+paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf). They used OpenMP to try and optimize
+alignment file sorting.
+
+---
+
+### Model and Data
+
+**Model**:
+
+The SNP analysis software we use throughout the project is
+ [SAMtools](http://www.htslib.org/). It is an open-source suite of programs
+ for interacting with high-throughput sequencing data, and can be downloaded at
+ the link above.
+
+ There are three separate reposititories that make up SAMtools and are required
+ for SNP analysis:
+ - [Samtools](https://github.com/samtools/samtools) - used for reading, writing, editing, indexing, and viewing SAM/BAM/CRAM alignment files
+ - [BCFtools](https://github.com/samtools/bcftools) - used for reading, writing, BCF2/VCF/gVCF files and calling, filtering, summarising SNP and short indel
+ (insertion plus deletion) sequence variants
+ - [HTSlib](https://github.com/samtools/htslib) - a C library used for reading and writing high-throughput sequencing data
+
+
+ **Data:**
+- Two individuals' DNA and RNA alignment and index files. These are public genomes from 
+the [1000 Genomes Project](http://www.internationalgenome.org/).
+- Each alignment file (.bam) is about 10GB, and each index file (.bai) is about 5MB.
+
+---
+
+### Technical description of the parallel application and programming models used
+
+---
+
+### Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests
+
+---
+
+### Technical description of the platform and infrastructure used
+
+---
+
+### Performance evaluation (speed-up, throughput, weak and strong scaling) and discussion about overheads and optimizations done
+
+---
+
+### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
+
+---
+
+### Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…
+
+---
+
+### references
+
+---
