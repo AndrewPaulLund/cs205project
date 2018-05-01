@@ -10,6 +10,10 @@ the work we did throughout the semester.**
 - Evaluation data, modified source code, batch scripts, and visualization
 notebooks are found in this repository
 
+## Add makefiles for gprof and OpenMP
+## Add OpenMP trail files
+## Add R script for plots
+
 ---
 
 ### Description of problem and the need for HPC and/or Big Data
@@ -29,7 +33,7 @@ in today's world. Some are as follows:
 The cost of genomic sequencing as dramatically decreased in the last decade as
 evidenced in the following plot from the [National Human Genome Research Institute](https://www.genome.gov/).
 
-![cost](report_images/cost.png)
+<img src="report_images/cost.png" width=500>
 
 As seen above, around 2008 the cost of sequencing has significantly decreased.
 Sequencing the first genome is thought to have cost more than $2.7 billion and
@@ -101,37 +105,79 @@ The SNP analysis software we use throughout the project is
  - [HTSlib](https://github.com/samtools/htslib) - a C library used for reading and writing high-throughput sequencing data
 
 
- **Data:**
-- Two individuals' DNA and RNA alignment and index files. These are public genomes from 
+**Data:**
+- Two individuals' DNA and RNA alignment and index files. These are public genomes from
 the [1000 Genomes Project](http://www.internationalgenome.org/).
 - Each alignment file (.bam) is about 10GB, and each index file (.bai) is about 5MB.
+
+A key attribute of the data, and all genomic alignment files is that the data is
+extremely heterogeneous. Each chunk of data can have orders of magnitude different
+number of reads (genome sequence strings). This makes sequentially processing
+the alignment files very uneven. This unpredictable sizing is displayed for
+both DNA and RNA of sample 1 below:
+
+|    Distribution      |  Heterogeneity |
+|:------------------- :|:--------------:|
+|![](report_images/DNA_Distribution)  |  ![](report_images/DNA_Heterogeneity)|
 
 ---
 
 ### Technical description of the parallel application and programming models used
-
+1. Binning
+2. OpenMP
+3. MPI
+4. Load Balancing
 ---
 
 ### Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests
 
+Insert how to run our code on the cluster here.
+
+To run our binning batches...
+
+To run our OpenMP jobs...
+
+To run our MPI jobs...
+
+To run load balancing jobs...
+
 ---
 
 ### Technical description of the platform and infrastructure used
+<img src="report_images/hms.png" width=100>
+
+Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) cluster for all our
+analysis.
+- 8,000 cores with several PB network storage
+- Nodes support up to 32 cores, but are capped at 30
+- This is a known problem in parallelization of related algorithms
 
 ---
 
 ### Performance evaluation (speed-up, throughput, weak and strong scaling) and discussion about overheads and optimizations done
 
+**1. Binning**
+
+
+
 ---
 
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
+
+We initially had a very hard timing profiling the SAMtools library. We spent more
+than two weeks trying to get the gprof profiler to run, and finally had a
+breakthrough when we realized we needed to include
+
+Use of load balancing is an advanced feature in my opinion.
 
 ---
 
 ### Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…
 
+We are very happy with the speedup we achieved through binning.
+
 ---
 
-### references
+### References
 
 ---
