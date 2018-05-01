@@ -117,8 +117,8 @@ the alignment files very uneven. This unpredictable sizing is displayed for
 both DNA and RNA of sample 1 below:
 
 |  Index File Distribution  | Heterogeneity |
-|:------------------- :|:--------------:|
-|![](report_images/DNA_Distribution.png)  |  ![](report_images/DNA_Heterogeneity.png)|
+|:---:|:---:|
+|![dna1](report_images/DNA_Distribution.png)  |  ![dna2](report_images/DNA_Heterogeneity.png)|
 
 ---
 
