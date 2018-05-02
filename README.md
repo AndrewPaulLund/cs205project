@@ -11,8 +11,10 @@ the work we did throughout the semester.**
 notebooks are found in this repository
 
 ## Add makefiles for gprof and OpenMP
-## Add OpenMP trail files
+## Add OpenMP trial files
 ## Add R script for plots
+## Add MPI work
+## Add load balancing work
 
 ---
 
@@ -57,9 +59,9 @@ the genome. The below image illustrates SNPs between three individuals.
 ![SNP](report_images/snp.png)
 
 We describe our project as both HTC (high-throughput computing) and Big Data.
-- HTC: in that there are almost a billion of high-frequency sequence reads for a
+- HTC - in that there are almost a billion of high-frequency sequence reads for a
 person's genome with today's techniques.
-- Big Data: in that the genomic alignment files can exceed 200GB.
+- Big Data - in that the genomic alignment files can exceed 200GB.
 
 To that end, the principle goal of our project is:
 
@@ -128,11 +130,146 @@ both DNA and RNA of sample 1 below:
 2. OpenMP
 3. MPI
 4. Load Balancing
+
 ---
 
-### Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests
+### Infrastructure
+<img src="report_images/hms.png" width=100>
 
-Insert how to run our code on the cluster here.
+Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) (HMSRC) cluster for all our testing and analysis.
+
+HMSRC description:
+
+# ADD MORE HERE
+
+- 8,000 cores with several PB network storage
+- Nodes support up to 32 cores, but are capped at 30
+- This is a known problem in parallelization of related algorithms
+
+---
+
+### Installing, Running, & Profiling SAMtools
+
+(Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests)
+
+#### Installing the SAMtools suite
+SAMtools is already available on the HMSRC cluster. In order to download,
+install and run  and  local version on the login node, we performed the following steps:
+
+```Bash
+# clone repositories, and install programs
+# HTSlib
+$ git clone https://github.com/samtools/htslib.git
+$ cd htslib
+$ autoheader
+$ autoconf
+$ ./configure
+$ make
+$ make install
+# SAMtools
+$ git clone https://github.com/samtools/samtools.git
+$ cd samtools
+$ autoheader
+$ autoconf
+$ ./configure
+$ make
+$ make install
+# BCFtools
+$ git clone https://github.com/samtools/bcftools.git
+$ cd bcftools
+$ autoheader
+$ autoconf
+$ ./configure
+$ make
+$ make install
+```
+
+#### Running SAMtools on a sample alignment file
+A sample alignment and index file for 10 million reads is found in this
+repository's ```data/sample_data``` directory.
+
+[mpileup](http://www.htslib.org/doc/samtools.html) is the function we identified
+as the primary overhead in the profiling section. From the documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
+
+In order to run ```mpileup``` with associated output timing follow these steps:
+
+```Bash
+# navigate to the local samtools installation
+$ cd .../samtools
+$ ./samtools mpileup
+$ time ./samtools mpileup .../HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+```
+
+Running the above command without ```time``` or ```> /dev/null``` will output
+the read sequences directly to the terminal window.
+
+#### Running ```mpileup``` batch jobs
+In order to automate speedup analysis of multiple samples with different
+parameters, we used perl and batch scripts on the HMSRC cluster.
+Sample files are found in the ```data/batch_scripts```
+
+Here is a sample from one of the
+perl files used for binning:
+
+```bash
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my @cores = (1,2,4,8,16,20);
+my @binSize = (10000,100000,1000000,10000000,100000000,1000000000);
+my $bamFile = "/n/scratch2/kt184/data/DNA/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam";
+my $refGenome = "/n/scratch2/kt184/genome/dna/hs37d5.fa";
+my $chrom = "1";
+my $outputJobScriptPrefix = "/home/kt184/scratch/results/testMultiCore/generateScripts/analysisRuntime/sampleDNA2";
+
+for my $core(@cores){
+for my $bin(@binSize){
+
+my $jobScriptFile = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . ".sh";
+my $outputDirectory = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . "/";
+my $outputPrefix = $outputDirectory . "runDNA2." . ".cores" . $core . ".binSize" . $bin;
+system("mkdir $outputDirectory");
+
+open(my $OUTPUT, ">", $jobScriptFile) || die $!;
+
+# Lazy to tab in
+print $OUTPUT "#!/bin/bash\n";
+print $OUTPUT "#SBATCH -p short #partition\n";
+print $OUTPUT "#SBATCH -t 0-12:00 #time days-hr:min\n";
+print $OUTPUT "#SBATCH -c $core #number of cores\n";
+print $OUTPUT "#SBATCH -N 1 #confine cores to 1 node, default\n";
+print $OUTPUT "#SBATCH --mem=8G #memory per job (all cores), GB\n";
+print $OUTPUT "#SBATCH -o %j.out #out file\n";
+print $OUTPUT "#SBATCH -e %j.err #error file\n";
+print $OUTPUT "\n";
+print $OUTPUT "\n";
+print $OUTPUT "module load gcc/6.2.0\n";
+print $OUTPUT "module load samtools/1.3.1\n";
+print $OUTPUT "module load bcftools\n";
+print $OUTPUT "module load perl/5.24.0\n";
+print $OUTPUT "eval \$(perl -I\$HOME/perl5/lib/perl5 -Mlocal::lib)\n";
+
+
+print $OUTPUT "bin_size=$bin\n";
+print $OUTPUT "bamFile=\"$bamFile\"\n";
+print $OUTPUT "refGenome=\"$refGenome\"\n";
+print $OUTPUT "numProcessors=$core\n";
+print $OUTPUT "outputPrefix=$outputPrefix\n";
+print $OUTPUT "chrom=\"$chrom\"\n";
+
+
+print $OUTPUT "/n/scratch2/kt184/results/testMultiCore/runParallelJobScript.pl \$bin_size \$bamFile \$refGenome \$numProcessors \$outputPrefix \$chrom\n";
+
+close($OUTPUT);
+
+print "sbatch " .  $jobScriptFile . "\n";
+}
+}
+```
+
+To Profile....
 
 To run our binning batches...
 
@@ -141,17 +278,6 @@ To run our OpenMP jobs...
 To run our MPI jobs...
 
 To run load balancing jobs...
-
----
-
-### Technical description of the platform and infrastructure used
-<img src="report_images/hms.png" width=100>
-
-Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) cluster for all our
-analysis.
-- 8,000 cores with several PB network storage
-- Nodes support up to 32 cores, but are capped at 30
-- This is a known problem in parallelization of related algorithms
 
 ---
 
