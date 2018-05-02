@@ -92,7 +92,7 @@ alignment file sorting.
 
 ### Model and Data
 
-**Model**:
+#### Model:
 
 The SNP analysis software we use throughout the project is
  [SAMtools](http://www.htslib.org/). It is an open-source suite of programs
@@ -107,29 +107,40 @@ The SNP analysis software we use throughout the project is
  - [HTSlib](https://github.com/samtools/htslib) - a C library used for reading and writing high-throughput sequencing data
 
 
-**Data:**
-- Two individuals' DNA and RNA alignment and index files. These are public genomes from
+#### Data:
+- Two individuals' DNA and RNA alignment and index files: Sample 1 and Sample 2
+- Files are public genomes from
 the [1000 Genomes Project](http://www.internationalgenome.org/).
 - Each alignment file (.bam) is about 10GB, and each index file (.bai) is about 5MB.
 
-A key attribute of the data, and all genomic alignment files is that the data is
+**Downloads:**
+
+DNA1:
+
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai
+
+DNA2:
+
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai
+
+RNA1:
+
+
+RNA2:
+
+
+A key attribute of the data, and all genomic alignment files is that it is
 extremely heterogeneous. Each chunk of data can have orders of magnitude different
 number of reads (genome sequence strings). This makes sequentially processing
-the alignment files very uneven. This unpredictable sizing is displayed for
-both DNA and RNA of sample 1 below:
+the alignment files very uneven. This unpredictable sizing is illustrated well for
+both DNA and RNA of Sample 1 below:
 
 |  Index File Distribution  | Heterogeneity |
 |:---:|:---:|
 |![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
 |![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
-
----
-
-### Technical description of the parallel application and programming models used
-1. Binning
-2. OpenMP
-3. MPI
-4. Load Balancing
 
 ---
 
@@ -271,7 +282,6 @@ print "sbatch " .  $jobScriptFile . "\n";
 
 To Profile....
 
-To run our binning batches...
 
 To run our OpenMP jobs...
 
@@ -281,7 +291,22 @@ To run load balancing jobs...
 
 ---
 
-### Performance evaluation (speed-up, throughput, weak and strong scaling) and discussion about overheads and optimizations done
+### Speedup Techniques
+
+(Technical description of the parallel application and programming models used)
+
+#### Explain each technique in detail here
+
+1. Binning
+2. OpenMP
+3. MPI
+4. Load Balancing
+
+---
+
+### Results
+
+(Performance evaluation (speed-up, throughput, weak and strong scaling) and discussion about overheads and optimizations done)
 
 **1. Binning**
 
