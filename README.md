@@ -113,19 +113,19 @@ The SNP analysis software we use throughout the project is
 the [1000 Genomes Project](http://www.internationalgenome.org/).
 - Each alignment file (.bam) is about 10GB, and each index file (.bai) is about 5MB.
 
-**Data Downloads:**
+**Alignment & Index Data Downloads:**
 
-DNA1: [alignment](ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam)
+DNA1: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam
 
- [index](ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai)
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00096/exome_alignment/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai
 
-DNA2: [alignment](ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam)
+DNA2: ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam
 
- [index](ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai)
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/data/HG00117/exome_alignment/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam.bai
 
-RNA1: [alignment](https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00096.1.M_111124_6.bam)
+RNA1: https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00096.1.M_111124_6.bam
 
-RNA2: [alignment](https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00117.1.M_111124_2.bam)
+RNA2: https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00117.1.M_111124_2.bam
 
 Index files can be generated using ```$ samtools index sample.bam```
 
