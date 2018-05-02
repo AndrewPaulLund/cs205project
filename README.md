@@ -194,6 +194,9 @@ $ make
 $ make install
 ```
 
+All program suit makefiles have the ```-O2``` optimization flag as default.
+We did not update this flag throughout the project.
+
 #### Running SAMtools on a sample alignment file
 A sample alignment and index file for 10 million reads is found in this
 repository's ```data/sample_data``` directory.
@@ -216,7 +219,7 @@ the read sequences directly to the terminal window.
 #### Running ```mpileup``` batch jobs
 In order to automate speedup analysis of multiple samples with different
 parameters, we used perl and batch scripts on the HMSRC cluster.
-Sample files are found in the ```data/batch_scripts```
+Sample files are found in the ```data/batch_scripts``` directory.
 
 Here is a sample from one of the
 perl files used for binning:
@@ -278,8 +281,86 @@ print "sbatch " .  $jobScriptFile . "\n";
 }
 }
 ```
+#### Profiling SAMtools
 
-To Profile....
+Profling was completed using the [gprof](https://sourceware.org/binutils/docs/gprof/)
+profiler. In order to get the profiler to run, we had to include both the
+```-pg``` flag in both the ```CFLAGS``` and ```LDFLAGS``` line items in the
+SAMtools ```Makefile```.
+
+Below is a sample of our SAMtools profiler results. The
+full profiler text can be found in the ```data/profiling``` directory.
+
+```bash
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 51.10      1.16     1.16        1     1.16     2.27  mpileup
+ 18.06      1.57     0.41  4519010     0.00     0.00  bam_plp_next
+ 12.11      1.85     0.28 26195998     0.00     0.00  pileup_seq
+  9.69      2.07     0.22 26896170     0.00     0.00  resolve_cigar2
+  5.73      2.20     0.13  4213250     0.00     0.00  bam_mplp_auto
+  0.44      2.21     0.01   353719     0.00     0.00  kh_get_olap_hash
+
+index % time    self  children    called     name
+                0.00    2.27       1/1           main [3]
+[1]    100.0    0.00    2.27       1         bam_mpileup [1]
+                1.16    1.11       1/1           mpileup [2]
+                0.00    0.00       1/1           sam_global_args_init [114]
+-----------------------------------------------
+                1.16    1.11       1/1           bam_mpileup [1]
+[2]    100.0    1.16    1.11       1         mpileup [2]
+                0.13    0.69 4213250/4213250     bam_mplp_auto [4]
+                0.28    0.01 26195998/26195998     pileup_seq [7]
+                0.01    0.00 4213249/4213249     mplp_get_ref [20]
+                0.00    0.00       1/1           bam_mplp_destroy [21]
+                0.00    0.00       1/1           bam_smpl_init [76]
+                0.00    0.00       1/1           hts_open_format [106]
+                0.00    0.00       1/1           hts_set_opt [107]
+                0.00    0.00       1/1           sam_hdr_read [115]
+                0.00    0.00       1/1           bam_smpl_add [74]
+                0.00    0.00       1/1           bcf_call_add_rg [77]
+                0.00    0.00       1/1           bam_mplp_init [69]
+                0.00    0.00       1/1           bam_mplp_init_overlaps [70]
+                0.00    0.00       1/1           bcf_init [83]
+                0.00    0.00       1/1           bam_mplp_set_maxcnt [71]
+                0.00    0.00       1/1           bcf_destroy [80]
+                0.00    0.00       1/1           bam_smpl_destroy [75]
+                0.00    0.00       1/1           bcf_call_del_rghash [78]
+                0.00    0.00       1/1           bam_hdr_destroy [65]
+                0.00    0.00       1/1           hts_close [103]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]    100.0    0.00    2.27                 main [3]
+                0.00    2.27       1/1           bam_mpileup [1]
+-----------------------------------------------
+                0.13    0.69 4213250/4213250     mpileup [2]
+[4]     36.1    0.13    0.69 4213250         bam_mplp_auto [4]
+                0.00    0.69 4213250/4213250     bam_plp_auto [5]
+-----------------------------------------------
+                0.00    0.69 4213250/4213250     bam_mplp_auto [4]
+[5]     30.4    0.00    0.69 4213250         bam_plp_auto [5]
+                0.41    0.24 4519010/4519010     bam_plp_next [6]
+                0.00    0.02  305760/305760      bam_plp_push [9]
+                0.01    0.01  305760/305760      mplp_func [10]
+-----------------------------------------------
+                0.41    0.24 4519010/4519010     bam_plp_auto [5]
+[6]     28.6    0.41    0.24 4519010         bam_plp_next [6]
+                0.22    0.00 26896170/26896170     resolve_cigar2 [8]
+                0.01    0.00  305759/305760      mp_free [15]
+                0.00    0.01  305759/305759      overlap_remove [19]
+-----------------------------------------------
+                0.28    0.01 26195998/26195998     mpileup [2]
+[7]     12.6    0.28    0.01 26195998         pileup_seq [7]
+                0.01    0.00    2670/2670        printw [18]
+-----------------------------------------------
+                0.22    0.00 26896170/26896170     bam_plp_next [6]
+[8]      9.7    0.22    0.00 26896170         resolve_cigar2 [8]
+-----------------------------------------------
+```
+## Add some profiling analysis
 
 
 To run our OpenMP jobs...
@@ -296,10 +377,10 @@ To run load balancing jobs...
 
 #### Explain each technique in detail here
 
-1. Binning
-2. OpenMP
-3. MPI
-4. Load Balancing
+1. **Binning** - we attempted to emberassingly parallelize the
+2. **OpenMP** -
+3. **MPI** -
+4. **Load Balancing** -
 
 ---
 
@@ -318,10 +399,10 @@ To run load balancing jobs...
 ---
 
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
-
-We initially had a very hard timing profiling the SAMtools library. We spent more
+- We initially had a very hard timing profiling the SAMtools library. We spent more
 than two weeks trying to get the gprof profiler to run, and finally had a
 breakthrough when we realized we needed to include
+- OpenMP was not trivial, and unsuccessful in speeding up execution time
 
 Use of load balancing is an advanced feature in my opinion.
 
@@ -329,7 +410,8 @@ Use of load balancing is an advanced feature in my opinion.
 
 ### Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…
 
-We are very happy with the speedup we achieved through binning.
+We are very happy with the speedup we achieved through binning. After determining
+the optimal bin size of 1 million
 
 ---
 
