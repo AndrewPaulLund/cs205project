@@ -6,22 +6,31 @@ Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
 **This README is our project website and serves as the final report for
 the work we did throughout the semester.**
 
-- Samtools source code is found [here](https://github.com/samtools)
+- Samtools source code is found [here](https://github.com/samtools).
 - Evaluation data, modified source code, batch scripts, and visualization
 notebooks are found in this repository
 
-## Add makefiles for gprof and OpenMP
-## Add OpenMP trial files
-## Add R script for plots
-## Add MPI work
-## Add load balancing work
-
 ---
+### Introduction
 
-### Description of problem and the need for HPC and/or Big Data
+**What is genomic sequencing?**
 
-[Genomic sequencing](https://en.wikipedia.org/wiki/DNA_sequencing) has many uses
-in today's world. Some are as follows:
+[Genomic sequencing](https://en.wikipedia.org/wiki/DNA_sequencing) is the process
+of determining the order of nucleotides in an individual. A human genome has
+3 billion nucleotides in the form of four letters (As, Cs, Gs, and Ts).
+
+One of the principal application of genomic sequencing analysis is identifying single
+nucleotide polymorphisms (SNP).
+
+[SNPs](https://en.wikipedia.org/wiki/Single-nucleotide_polymorphism) are
+differences in single nucleotides that occur at a specific position in
+the genome. The below image illustrates SNPs between three individuals.
+
+![SNP](report_images/snp.png)
+
+**What are the uses of genomic sequencing?**
+
+Genomic sequencing has many uses in today's world. Some are as follows:
 - Quicker diagnosis of mysterious diseases
 - Finding patients with the same disease
 - Very important for extremely rare disorders
@@ -32,10 +41,11 @@ in today's world. Some are as follows:
 - Testing how someone will respond to a certain medication
 - Used for certain kinds of cancers
 
-The cost of genomic sequencing as dramatically decreased in the last decade as
-evidenced in the following plot from the [National Human Genome Research Institute](https://www.genome.gov/).
+**Explosion of cheap data outweighs compute infrastructure**
 
-<img src="report_images/cost.png" width=500>
+Today, genomic data is being generated at a much faster and efficient rate than the
+compute infrastructure that supports its analysis. As evidenced in the following
+plot from the [National Human Genome Research Institute](https://www.genome.gov/), the cost of genomic sequencing as dramatically decreased in the last decade.
 
 As seen above, around 2008 the cost of sequencing has significantly decreased.
 Sequencing the first genome is thought to have cost more than $2.7 billion and
@@ -45,29 +55,46 @@ one week.
 The primary overhead for genomic sequencing is now computation. The
 algorithms used are not easily parallelized, and do not scale linearly.
 
-It is important for sequencing results to be returned in a timely manner
-to clinicians and researchers for clinical applications. Greater than one
-week runtimes in some applications is too slow for timely diagnostics.
+<img src="report_images/cost.png" width=500>
 
-One of the principal application of genomic analysis is identifying single
-nucleotide polymorphisms (SNP).
+### Need for parallelization in computational analysis of genomic data
 
-[SNPs](https://en.wikipedia.org/wiki/Single-nucleotide_polymorphism) are
-differences in single nucleotides that occur at a specific position in
-the genome. The below image illustrates SNPs between three individuals.
+Given the huge amount of genomic data being produced today and the huge number
+of individuals being sequenced. For example, both [GenomeAsia100K](http://www.genomeasia100k.com/) and the UK's [National Health
+Service](http://www.sciencemag.org/news/2012/12/uk-unveils-plan-sequence-whole-genomes-100000-patients) are trying to sequence 100,000 individual genomes for
+medical and population studies. For a single individual the genomic data is
+approximately 100-200 GB. The total size of both these project is in the range
+of 1-2 PB and is too large to practically manage on a single machine.
 
-![SNP](report_images/snp.png)
+Analysis of a single individual's genome can take up to [~10 days](https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/deploying-gatk-best-practices-paper.pdf) on a single threaded process. To analyze 100,000
+such samples, it would take 24,000,000 core hours of computing power, or 2700
+years on a single core. This is obviously impractical to run on a single core,
+hence the need for parallelization.
 
-We describe our project as both HTC (high-throughput computing) and Big Data.
-- HTC - in that there are almost a billion of high-frequency sequence reads for a
-person's genome with today's techniques.
-- Big Data - in that the genomic alignment files can exceed 200GB.
+In clinical applications, this long analysis is too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
+days to 1-2 hours, which in a clinical setting could result in a life saved versus lost.
 
+Given the shear size of the data and computing power required for analysis, we
+describe our project as both "Big Data" and "Big Compute."
+
+### Need for "efficient" parallelization
+
+Parallelization can result in speedup of analysis, but is often in a non-linear
+manner. For example, we may be able to use 10 cores to achieve a 5x speedup. That is why we need "efficient" parallelization in order to achieve a linear speedup and
+reduce both time and cost. To that end:
+
+1. If the analyses could be completed in-house or on an institutional high-performance computing infrastructure, where the number of nodes is limited and current analysis can take 2-3 months, a more linear speedup of ~20% could result in a time savings of ~2 weeks.
+
+2. If you run analysis on the cloud, these analyses can be quite costly due to
+cloud compute pricing. If we used Google Compute cloud infrastructure with a
+single core [m1-standard-1](https://cloud.google.com/compute/pricing), running
+the 100,000 samples mentioned above, it would cost about $1.14 million. Increasing the
+efficiency of the analysis by 10-20% could allow a cost-savings around $100-200K.
+
+The argument for efficient parallelization makes both timely and monetary sense.
 To that end, the principle goal of our project is:
 
-**To speed up the identification of single nucleotide polymorphisms (SNP) in DNA
-and RNA through big data and high throughput computing parallelization
- techniques.**
+**To efficiently speed up SNP analysis through big data and big compute parallelization techniques.**
 
 ---
 
@@ -433,7 +460,14 @@ To run load balancing jobs...
 
 #### Explain each technique in detail here
 
-1. **Binning** - we attempted to emberassingly parallelize the
+1. **Binning** - our first method of speeding up the SNP analysis involved what
+we termed "binning" or distributing the DNA and RNA reads (sequence strings)
+into bins amongst cores of a CPU. We distributed them into sequential chunks
+from $10^4$ to $10^9$. This was done initially with one chromosome on one core
+to determine the ideal bin size. After determining the ideal bin size, we tested
+that bin size across a number of cores from 2 to 20. Results are discussed in
+the results sections below.
+
 2. **OpenMP** -
 3. **MPI** -
 4. **Load Balancing** -
@@ -442,7 +476,8 @@ To run load balancing jobs...
 
 ### Results
 
-(Performance evaluation (speed-up, throughput, weak and strong scaling) and discussion about overheads and optimizations done)
+(Performance evaluation (speed-up, throughput, weak and strong scaling) and
+discussion about overheads and optimizations done)
 
 **1. Binning**
 
@@ -474,4 +509,12 @@ the optimal bin size of 1 million
 
 ### References
 
+Throughout this report sources are cited through inline links.
 ---
+
+
+## Add makefiles for gprof and OpenMP
+## Add OpenMP trial files
+## Add R script for plots
+## Add MPI work
+## Add load balancing work
