@@ -196,6 +196,16 @@ $ make install
 All program suit makefiles have the ```-O2``` optimization flag as default.
 We did not update this flag throughout the project.
 
+#### SAMtools & BCFtools
+
+The flow of data from alignment and index files is illustrated below.
+
+<img src="report_images/dataflow.png" width=500>
+
+SAMtools reads the index and alignment files, pipes standard output to BCFtools,
+which identifies SNPs in a data pipeline. The area of parallelization our
+project focused on is the ```mpileup``` function.
+
 #### Running SAMtools on a sample alignment file
 A sample alignment and index file for 10 million reads is found in this
 repository's ```data/sample_data``` directory.
@@ -509,7 +519,8 @@ Our team used the [Harvard Medical School Research Computing](https://rc.hms.har
 - CentOS 7
 - SLURM batch system
 - Supports OpenMP, MPI
-- Currently does not support Spark
+- Currently does not support Spark (we initially intended on using Spark for
+  load balancing implementation)
 
 HMSRC Cluster Architecture:
 <img src="report_images/cluster.png" width=500>
