@@ -362,6 +362,62 @@ index % time    self  children    called     name
 ```
 ## Add some profiling analysis
 
+#### Profiling BCFtools
+Below is a sample of our BCFtools profiling. The full output file can be
+viewed in the ```data/profiling``` directory.
+
+```bash
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 23.08      0.21     0.21                             bcf_dec_size_safe
+ 15.38      0.35     0.14                             bcf_fmt_sized_array
+ 12.09      0.46     0.11                             bcf_fmt_array
+  8.79      0.54     0.08        1    80.00    90.00  main_vcfcall
+  7.69      0.61     0.07                             bgzf_read
+  6.59      0.67     0.06                             _reader_next_line
+  5.49      0.72     0.05                             bcf_dec_typed_int1_safe
+  5.49      0.77     0.05                             bcf_sr_sort_next
+  5.49      0.82     0.05                             kputc
+  4.40      0.86     0.04                             bcf_clear
+  2.20      0.88     0.02                             bcf_sr_next_line
+  1.10      0.89     0.01    20067     0.00     0.00  mc_cal_afs
+  1.10      0.90     0.01                             bcf_read
+  1.10      0.91     0.01                             bcf_unpack
+
+granularity: each sample hit covers 2 byte(s) for 1.10% of 0.91 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     23.1    0.21    0.00                 bcf_dec_size_safe [1]
+-----------------------------------------------
+                                                 <spontaneous>
+[2]     15.4    0.14    0.00                 bcf_fmt_sized_array [2]
+-----------------------------------------------
+                                                 <spontaneous>
+[3]     12.1    0.11    0.00                 bcf_fmt_array [3]
+-----------------------------------------------
+                0.08    0.01       1/1           main [5]
+[4]      9.9    0.08    0.01       1         main_vcfcall [4]
+                0.00    0.01   20067/20067       ccall [14]
+                0.00    0.00   20067/20067       set_ploidy [32]
+                0.00    0.00       1/1           ploidy_init_string [78]
+                0.00    0.00       1/1           init_data [65]
+                0.00    0.00       1/1           destroy_data [63]
+-----------------------------------------------
+                                                 <spontaneous>
+[5]      9.9    0.00    0.09                 main [5]
+                0.08    0.01       1/1           main_vcfcall [4]
+-----------------------------------------------
+                                                 <spontaneous>
+[6]      7.7    0.07    0.00                 bgzf_read [6]
+-----------------------------------------------
+
+```
+
+## Add some analysis
 
 To run our OpenMP jobs...
 
@@ -394,6 +450,7 @@ To run load balancing jobs...
 |:---:|:---:|
 |![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning2.png)|
 |![bin2](report_images/binning3.png)  |  ![bin4](report_images/binning4.png)|
+|![bin5](report_images/binning5.png)  |  ![bin6](report_images/binning6.png)|
 
 
 ---
