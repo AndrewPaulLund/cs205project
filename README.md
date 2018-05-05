@@ -51,6 +51,8 @@ algorithms used are not easily parallelized, and do not scale linearly.
 
 <img src="report_images/cost.png" width=500>
 
+---
+
 ### Need for parallelization in computational analysis of genomic data
 
 Given the huge amount of genomic data being produced today and the huge number
@@ -70,6 +72,8 @@ days to 1-2 hours, which in a clinical setting could result in a life saved vers
 
 Given the shear size of the data and computing power required for analysis, we
 describe our project as both "Big Data" and "Big Compute."
+
+---
 
 ### Need for "efficient" parallelization
 
@@ -93,7 +97,7 @@ To that end, the principle goal of our project is:
 
 ### Model and Data
 
-#### Model:
+#### SNP Analysis Model:
 
 The SNP analysis software we used throughout the project is
  [SAMtools](http://www.htslib.org/). It is an open-source suite of programs
@@ -161,7 +165,7 @@ alignment file sorting.
 
 (Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests)
 
-#### Installing the SAMtools suite
+#### Installing the SAMtools analysis suite
 SAMtools is already available on the HMSRC cluster. In order to download,
 install and run  and  local version on the login node, we performed the following steps:
 
@@ -193,10 +197,10 @@ $ make
 $ make install
 ```
 
-All program suit makefiles have the ```-O2``` optimization flag as default.
+All program suit makefiles use the ```-O2``` optimization flag by default.
 We did not update this flag throughout the project.
 
-#### SAMtools & BCFtools
+#### SAMtools & BCFtools Dataflow
 
 The flow of data from alignment and index files is illustrated below.
 
@@ -207,11 +211,12 @@ which identifies SNPs in a data pipeline. The area of parallelization our
 project focused on is the ```mpileup``` function.
 
 #### Running SAMtools on a sample alignment file
-A sample alignment and index file for 10 million reads is found in this
-repository's ```data/sample_data``` directory.
+Sample 1 DNA alignment and index files for 10 million reads is found in this
+repository's ```data/sample_data``` directory. We used this file extensively
+for testing due to it's reasonable serial ```mpileup``` runtimes (~30 seconds).
 
 [mpileup](http://www.htslib.org/doc/samtools.html) is the function we identified
-as the primary overhead in the profiling section. From the documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
+as the primary overhead in the profiling section below. From source code documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
 
 In order to run ```mpileup``` with associated output timing follow these steps:
 
@@ -223,11 +228,12 @@ $ time ./samtools mpileup .../HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10m
 ```
 
 Running the above command without ```time``` or ```> /dev/null``` will output
-the read sequences directly to the terminal window.
+the read sequences directly to the terminal window and give you an idea of
+what ```mpileup```'s standard output looks like.
 
 #### Running ```mpileup``` batch jobs
-In order to automate speedup analysis of multiple samples with different
-parameters, we used perl and batch scripts on the HMSRC cluster.
+In order to automate parallelization speedup analysis of multiple samples with different
+parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
 Sample files are found in the ```data/batch_scripts``` directory.
 
 Here is a sample from one of the
@@ -369,7 +375,14 @@ index % time    self  children    called     name
 [8]      9.7    0.22    0.00 26896170         resolve_cigar2 [8]
 -----------------------------------------------
 ```
-## Add some profiling analysis
+As seen in the above SAMtools profiling statistics, the primary time overheads
+occur in:
+1. mpileup
+2. bam_mpileup
+3. pileup_seq
+
+These three functions are the focus of our OpenMP parallelization attempt
+outlined below.
 
 #### Profiling BCFtools
 Below is a sample of our BCFtools profiling. The full output file can be
@@ -453,7 +466,7 @@ both DNA and RNA of Sample 1 below:
 |![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
 
 
-#### Parallelization techniques
+#### Parallelization Techniques
 
 1. **Binning** - our first method of speeding up the SNP analysis involved what
 we termed "binning" or distributing the DNA and RNA reads (sequence strings)
@@ -522,7 +535,7 @@ Our team used the [Harvard Medical School Research Computing](https://rc.hms.har
 - Currently does not support Spark (we initially intended on using Spark for
   load balancing implementation)
 
-HMSRC Cluster Architecture:
+**HMSRC Cluster Architecture:**
 
 <img src="report_images/cluster.png" width=500>
 
