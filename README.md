@@ -523,6 +523,7 @@ Our team used the [Harvard Medical School Research Computing](https://rc.hms.har
   load balancing implementation)
 
 HMSRC Cluster Architecture:
+
 <img src="report_images/cluster.png" width=500>
 
 ---
