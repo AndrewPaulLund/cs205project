@@ -1,14 +1,8 @@
+### Harvard University - CS205 Computing Foundations for Computational Science - Spring 2018 - Final Project
+
 # Genomic Sequencing Analysis Parallelization
 
 Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
-
-## Project Website
-**This README is our project website and serves as the final report for
-the work we did throughout the semester.**
-
-- Samtools source code is found [here](https://github.com/samtools).
-- Evaluation data, modified source code, batch scripts, and visualization
-notebooks are found in this repository
 
 ---
 ### Introduction
@@ -80,8 +74,7 @@ describe our project as both "Big Data" and "Big Compute."
 ### Need for "efficient" parallelization
 
 Parallelization can result in speedup of analysis, but is often in a non-linear
-manner. For example, we may be able to use 10 cores to achieve a 5x speedup. That is why we need "efficient" parallelization in order to achieve a linear speedup and
-reduce both time and cost. To that end:
+manner. For example, we may be able to use 10 cores to achieve a 5x speedup. That is why we need to focus on "efficient" parallelization in order to try and achieve a linear speedup and reduce both time and cost. To that end:
 
 1. If the analyses could be completed in-house or on an institutional high-performance computing infrastructure, where the number of nodes is limited and current analysis can take 2-3 months, a more linear speedup of ~20% could result in a time savings of ~2 weeks.
 
@@ -98,47 +91,32 @@ To that end, the principle goal of our project is:
 
 ---
 
-### Description of solution and comparison with existing work
-
-Our project evaluated four primary speedup techniques for speeding up SNP
-analysis:
-1. Binning - distributing DNA & RNA reads (sequence
-strings) into “bins” amongst cores
-2. OpenMP - shared-memory technique to reduce execution time
-3. MPI - distributed-memory technique to reduce execution timely
-4. Load balancing - reduce heterogeneity by sorting genome alignment index files
-
-Each of these techniques and their results are described in detail in the
-following sections.
-
-A source we used for our initial profiling analysis is Weeks and Luecke's 2017
-paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf). They used OpenMP to try and optimize
-alignment file sorting.
-
----
-
 ### Model and Data
 
 #### Model:
 
-The SNP analysis software we use throughout the project is
+The SNP analysis software we used throughout the project is
  [SAMtools](http://www.htslib.org/). It is an open-source suite of programs
  for interacting with high-throughput sequencing data, and can be downloaded at
- the link above.
+ the link above. It is a single-threaded program that does not natively support
+ parallelization and consists of ~93,000 lines of mostly C code.
 
- There are three separate reposititories that make up SAMtools and are required
+ There are three separate repositories that make up SAMtools and are required
  for SNP analysis:
  - [Samtools](https://github.com/samtools/samtools) - used for reading, writing, editing, indexing, and viewing SAM/BAM/CRAM alignment files
- - [BCFtools](https://github.com/samtools/bcftools) - used for reading, writing, BCF2/VCF/gVCF files and calling, filtering, summarising SNP and short indel
+
+ - [BCFtools](https://github.com/samtools/bcftools) - used for reading, writing, BCF2/VCF/gVCF files and calling, filtering, summarizing SNP and short indel
  (insertion plus deletion) sequence variants
  - [HTSlib](https://github.com/samtools/htslib) - a C library used for reading and writing high-throughput sequencing data
 
+Software usage is described below.
 
-#### Data:
-- Two individuals' DNA and RNA alignment and index files: Sample 1 and Sample 2
-- Files are public genomes from
-the [1000 Genomes Project](http://www.internationalgenome.org/).
-- Each alignment file (.bam) is about 10GB, and each index file (.bai) is about 5MB.
+#### Genome Data:
+- Two individuals' DNA and RNA alignment and index files: "Sample 1" and
+"Sample 2"
+- Files are public genomes from the
+[1000 Genomes Project](http://www.internationalgenome.org/).
+- Each alignment file (.bam) is ~10GB, and each index file (.bai) is ~5MB.
 
 **Alignment & Index Data Downloads:**
 
@@ -157,31 +135,25 @@ RNA2: https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00117.1.M_111124_2.bam
 Index files can be generated using ```$ samtools index sample.bam```
 
 
-A key attribute of the data, and all genomic alignment files is that it is
-extremely heterogeneous. Each chunk of data can have orders of magnitude different
-number of reads (genome sequence strings). This makes sequentially processing
-the alignment files very uneven. This unpredictable sizing is illustrated well for
-both DNA and RNA of Sample 1 below:
-
-|  Index File Distribution  | Heterogeneity |
-|:---:|:---:|
-|![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
-|![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
 
 ---
 
-### Infrastructure
-<img src="report_images/hms.png" width=100>
+### Description of solution and comparison with existing work
 
-Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) (HMSRC) cluster for all our testing and analysis.
+Our project evaluated four primary parallelization techniques for speeding up SNP
+analysis:
+1. Binning - distributing DNA & RNA reads (sequence
+strings) into “bins” amongst cores
+2. OpenMP - shared-memory technique to reduce execution time
+3. MPI - distributed-memory technique to reduce execution timely
+4. Load balancing - reduce heterogeneity by sorting genome alignment index files
 
-HMSRC description:
+Each of these techniques and their results are described in detail in the
+following sections.
 
-# ADD MORE HERE
-
-- 8,000 cores with several PB network storage
-- Nodes support up to 32 cores, but are capped at 30
-- This is a known problem in parallelization of related algorithms
+A source we used for our initial profiling analysis is Weeks and Luecke's 2017
+paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf). They used OpenMP to try and optimize
+alignment file sorting.
 
 ---
 
@@ -458,7 +430,20 @@ To run load balancing jobs...
 
 (Technical description of the parallel application and programming models used)
 
-#### Explain each technique in detail here
+#### Data Heterogeneity
+A key attribute of the data, and all genomic alignment files is that it is
+extremely heterogeneous. Each chunk of data can have orders of magnitude different
+number of reads (genome sequence strings). This makes sequentially processing
+the alignment files very uneven. This unpredictable sizing is illustrated well for
+both DNA and RNA of Sample 1 below:
+
+|  Index File Distribution  | Heterogeneity |
+|:---:|:---:|
+|![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
+|![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
+
+
+#### Parallelization techniques
 
 1. **Binning** - our first method of speeding up the SNP analysis involved what
 we termed "binning" or distributing the DNA and RNA reads (sequence strings)
@@ -507,14 +492,48 @@ the optimal bin size of 1 million
 
 ---
 
+### Infrastructure
+<img src="report_images/hms.png" width=100>
+
+Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) (HMSRC) cluster for all testing and analysis.
+
+**HMSRC description:**
+- 8,000 cores
+  - 32 or 28 cores per node
+    - Nodes support up to 32 cores, but are capped at 20
+    - A known problem in parallelization of related genomic algorithms
+  - 256 GB RAM per node (8-9 GB/core)
+- 24 GPUs (8 M40 / 16 K80) - Not utilized for this project
+- Login/load balancer 5 VM (8 cores/16 GB memory)
+- InfiniBandconnectivity between nodes
+- CentOS 7
+- SLURM batch system
+- Supports OpenMP, MPI
+- Currently does not support Spark
+
+HMSRC Cluster Architecture:
+<img src="report_images/cluster.png" width=500>
+
+---
+
 ### References
 
 Throughout this report sources are cited through inline links.
+They appear in the following order:
+- ADD SOURCES HERE
+
 ---
 
+**This README is our project website and serves as its final report.**
 
-## Add makefiles for gprof and OpenMP
-## Add OpenMP trial files
-## Add R script for plots
-## Add MPI work
-## Add load balancing work
+- Samtools source code is found [here](https://github.com/samtools).
+- Evaluation data, modified source code, simulation and batch scripts, and visualization
+notebooks are found in this repository
+
+# TODO:
+- Add makefiles for gprof and OpenMP
+- Add OpenMP trial files
+- Add R script for plots
+- Add MPI work
+- Add load balancing work
+- mpileup vs. bcftools runtimes (a lot more time for mpileup)
