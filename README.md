@@ -115,12 +115,17 @@ The SNP analysis software we used throughout the project is
 
 Software usage is described below.
 
-#### Genome Data:
-- Two individuals' DNA and RNA alignment and index files: "Sample 1" and
-"Sample 2"
+#### This Project's Genome Data:
+- Two individuals' DNA and RNA alignment and index files - referred to as
+"Sample 1", "Sample 2", "DNA1", "DNA2", "RNA1", or "RNA2" throughout this
+project.
 - Files are public genomes from the
 [1000 Genomes Project](http://www.internationalgenome.org/).
 - Each alignment file (.bam) is ~10GB, and each index file (.bai) is ~5MB.
+
+Index files are much smaller than alignment files and act like a table of contents to
+the alignment file, allowing programs like SAMtools to jump to specific sections
+in the alignment file without having to read sequentially through it.
 
 **Alignment & Index Data Downloads:**
 
@@ -138,7 +143,8 @@ RNA2: https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00117.1.M_111124_2.bam
 
 Index files can be generated using ```$ samtools index sample.bam```
 
-
+Details about the infrastructure we used are in the "Infrastructure" section
+toward the bottom of this report.
 
 ---
 
@@ -148,16 +154,21 @@ Our project evaluated four primary parallelization techniques for speeding up SN
 analysis:
 1. Binning - distributing DNA & RNA reads (sequence
 strings) into “bins” amongst cores
-2. OpenMP - shared-memory technique to reduce execution time
-3. MPI - distributed-memory technique to reduce execution timely
-4. Load balancing - reduce heterogeneity by sorting genome alignment index files
+2. OpenMP - shared-memory technique to reduce execution time. This parallelization
+technique has potential to speed up analysis time on single nodes with multiple
+cores.
+3. MPI - distributed-memory technique to reduce execution time across multiple
+nodes. This process would spread analysis across independent nodes, and combine
+their results into a overall SNP file.
+4. Load balancing - reduce analysis heterogeneity by sorting genome alignment
+index files. We developed a load balancing simulator described in detail below.
 
 Each of these techniques and their results are described in detail in the
 following sections.
 
-A source we used for our initial profiling analysis is Weeks and Luecke's 2017
-paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf). They used OpenMP to try and optimize
-alignment file sorting.
+A literature source we used for our initial profiling analysis is Weeks and Luecke's 2017
+paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf).
+They used OpenMP to try and optimize alignment file sorting.
 
 ---
 
@@ -167,7 +178,8 @@ alignment file sorting.
 
 #### Installing the SAMtools analysis suite
 SAMtools is already available on the HMSRC cluster. In order to download,
-install and run  and  local version on the login node, we performed the following steps:
+install and run  and  local version for us to modify on the HMSRC login node, we
+performed the following steps:
 
 ```Bash
 # clone repositories, and install programs
@@ -208,14 +220,16 @@ The flow of data from alignment and index files is illustrated below.
 
 SAMtools reads the index and alignment files, pipes standard output to BCFtools,
 which identifies SNPs in a data pipeline. The area of parallelization our
-project focused on is the ```mpileup``` function.
+project focused on is the ```mpileup``` function within the SAMtools program
+suite.
 
 #### Running SAMtools on a sample alignment file
 Sample 1 DNA alignment and index files for 10 million reads is found in this
 repository's ```data/sample_data``` directory. We used this file extensively
 for testing due to it's reasonable serial ```mpileup``` runtimes (~30 seconds).
+All our analyses can be easily extended to larger alignment and index files.
 
-[mpileup](http://www.htslib.org/doc/samtools.html) is the function we identified
+The [mpileup](http://www.htslib.org/doc/samtools.html) function was identified
 as the primary overhead in the profiling section below. From source code documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
 
 In order to run ```mpileup``` with associated output timing follow these steps:
@@ -234,10 +248,10 @@ what ```mpileup```'s standard output looks like.
 #### Running ```mpileup``` batch jobs
 In order to automate parallelization speedup analysis of multiple samples with different
 parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample files are found in the ```data/batch_scripts``` directory.
+Sample batch files are found in the ```data/batch_scripts``` directory.
 
 Here is a sample from one of the
-perl files used for binning:
+perl files used for the binning technique described below:
 
 ```bash
 #!/usr/bin/perl
@@ -297,10 +311,14 @@ print "sbatch " .  $jobScriptFile . "\n";
 }
 ```
 #### Profiling
+In order to evaluate specific functions within the SAMtools and BCFtools libraries
+to focus our parallelization speedup techniques on, we completed profiling.
 
 As seen below, we profiled both SAMtools and BCFtools. Both results are shown,
-but we focused moreon SAMtools than BCFtools, since SAMtools runs considerably
-longer than BCFtools for a given sample
+but we focused more on SAMtools than BCFtools, since SAMtools typically runs more
+than 10-times longer than BCFtools for a given sample. Sample timings for
+SAMtools and BCFtools on the same sample are found in the
+```profiling/runTimes.txt``` file.
 
 #### Profiling SAMtools
 
@@ -387,7 +405,7 @@ occur in:
 2. bam_mpileup
 3. pileup_seq
 
-These three functions are the focus of our OpenMP parallelization attempt
+These three specific functions are the focus of our OpenMP parallelization attempt
 outlined below.
 
 #### Profiling BCFtools
@@ -455,14 +473,6 @@ index % time    self  children    called     name
 
 ```
 
-## Add some analysis
-
-To run our OpenMP jobs...
-
-To run our MPI jobs...
-
-To run load balancing jobs...
-
 ---
 
 ### Speedup Techniques
@@ -484,7 +494,7 @@ both DNA and RNA of Sample 1 below:
 
 #### Parallelization Techniques
 
-**1. Binning** - our first method of speeding up the SNP analysis involved what
+**1. Binning** - Our first method of speeding up the SNP analysis involved what
 we termed "binning" or distributing the DNA and RNA reads (sequence strings)
 into bins amongst cores of a CPU. We distributed them into sequential chunks
 from $10^4$ to $10^9$. This was done initially with one chromosome on one core
@@ -493,12 +503,50 @@ that bin size across a number of cores from 2 to 20. A sample batch script for
 binning is outlined in the "Running ```mpileup``` batch jobs" section above, and
 Results are discussed in the "Results" section below.
 
-**2. OpenMP** -
+**2. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
+parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
+these functions are found in the SAMtools library, specifically in the
+```bam_plcmd.c``` file.
 
-**3. MPI** -
+It is important to note that when recompiling the SAMtools library, one must
+include the ```-fopenmp``` flag on both the ```CFLAGS``` and ```LDFLAGS```
+lines within the ```Makefile```. It is also important to add
+```#include omp.h``` in the module header.
+
+We moved sequentially through the functions, adding
+```#pragma``` lines on for loops, recompiling and making using
+```$ make clean``` and ```$ make all``` commands, and running SAMtools on the
+HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam sample found in the
+```data/sample_data``` directory.
+
+To run a timed OpenMP test on our small chromosome sample we used the following
+generic command:
+
+```Bash
+$ time ./samtools mpileup sample.bam > dev/null
+```
+The number of OpenMP threads was adjusted using the ```$ export OMP_NUM_THREADS="n"```
+command.
+
+Results for our OpenMP tests are found in the
+"Results" section below.
+
+
+**3. MPI** - FILL IN HERE!
+
+To run MPI on the HMSRC cluster the following modules have to be loaded in advanced
+with these commands:
+```Bash
+$ module load gcc/6.2.0
+$ module load openmpi/2.0.1
+```
 
 **4. Load Balancing** - We often see a non-linear speed-up due to the data's
-heterogeneity as outlined above. In order to process the heterogeneous data we
+heterogeneity as outlined above.
+
+# Discuss trying to read the index file here.
+
+In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
 and output files are found in the ```load_balance_simulator``` directory. It
@@ -509,6 +557,9 @@ techniques to parallelize the data across a range of cores.
 2. Original data order processing
 3. Random order processing
 4. Descending data size processing
+
+Results for these four sorting techniques are discussed in the "Results" section
+below.
 
 **Running Load Balancing Simulations**
 
@@ -527,6 +578,19 @@ discussion about overheads and optimizations done)
 
 **1. Binning**
 
+There are two principal steps to our binning parallelization technique.
+1. Determine the minimum bin size for sequence reads.
+2. Spread bins across cores from 2-20
+
+As seen below, we determined that at least 1,000,000 reads per bin is the optimal
+number. For both DNA and RNA, the one chromosome analysis runtime decreases
+precipitously from 10,000 to 1,000,000 then levels off. We also decided to use
+1,000,000 as the optimal size as increasing the bin size further will reduce the
+total number of bins for a sample which reduces the benefit of parallelization.
+
+As seen in the time and speedup plots, we see excellent speedup for our binning
+technique and are pleased with the results.
+
 |  DNA  | RNA |
 |:---:|:---:|
 |![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning2.png)|
@@ -534,11 +598,27 @@ discussion about overheads and optimizations done)
 |![bin5](report_images/binning5.png)  |  ![bin6](report_images/binning6.png)|
 
 **2. OpenMP**
-EXPLAIN SAMtools OpenMP with results.
+As previously noted, we focused our OpenMP parallelization on three functions
+within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
+were parallizable in the bam_mpileup function. Module files for each OpenMP
+attempt are in the ```data/open_mp_tests``` directory. The results for our
+10 million read sample follow:
 
-Ultimately unable to properly compile BCFtools on the HMSRC cluster, and due to
-it's relatively low runtime when compared to SAMtools we did not further attempt
-to parallelize BCFtools.
+| Function | 1 thread time (seconds) | 8 threads time (seconds)
+|---|---|---|
+| no pragmas | 22.3 | --- |  
+| mpileup (8 pragmas) | 37.5 | 37.4 |
+| pileup_seq (2 pragmas) | 103.7 | 50.5 |
+
+As seen above, all attempts to speed up the ```mpileup``` module using OpenMP
+resulted in slower execution times. We suspect this is due to complex
+interdependencies between SAMtools and HTSlib that we did not have time to
+investigate within the scope of this project.
+
+We were also ultimately unable to properly compile BCFtools with the ```-fopenmp```
+flag on the HMSRC cluster, and due to
+its relatively slow runtime when compared to SAMtools we did not further attempt
+to parallelize BCFtools with OpenMP.
 
 **3. MPI**
 
@@ -571,7 +651,7 @@ Use of load balancing is an advanced feature in my opinion.
 
 We are very happy with the speedup we achieved through binning and simulated load balancing. After determining
 the optimal bin size of 1 million
-
+- Discuss trying to read the index file with JAVA, etc.
 - We would have liked to include Spark. ADD COMMENTARY HERE
 
 ---

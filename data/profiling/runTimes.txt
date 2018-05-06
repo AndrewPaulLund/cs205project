@@ -1,0 +1,62 @@
+# Analyze the intermediate file with bcftools
+cat DNA.10mil_for_bcftools.file | bcftools call -O b -c -v > test.bcf
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+Terminated
+
+real	0m43.511s
+user	0m10.701s
+sys	0m0.761s
+[kt184@login03 DNA]$ time cat DNA.10mil_for_bcftools.file | bcftools call -O b -c -v > test.bcf
+Note: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid
+
+real	0m8.363s
+user	0m1.226s
+sys	0m0.948s
+[kt184@login03 DNA]$ ifconfig^C
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+
+
+real	2m9.387s
+user	0m34.468s
+sys	0m0.984s
+[kt184@login03 DNA]$ 
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+^C
+
+real	0m1.934s
+user	0m0.412s
+sys	0m0.109s
+[kt184@login03 DNA]$ time cat DNA.10mil_for_bcftools.file | bcftools call -O b -c -v > test.bcf
+Note: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid
+
+real	0m8.774s
+user	0m1.318s
+sys	0m1.022s
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+Terminated
+
+real	1m19.174s
+user	0m20.835s
+sys	0m0.976s
+[kt184@login03 DNA]$ time cat DNA.10mil_for_bcftools.file | bcftools call -O b -c -v > test.bcf
+Note: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid
+
+real	0m9.302s
+user	0m1.235s
+sys	0m0.890s
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+
+real	2m0.213s
+user	0m35.030s
+sys	0m0.872s
+
