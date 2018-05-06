@@ -296,6 +296,12 @@ print "sbatch " .  $jobScriptFile . "\n";
 }
 }
 ```
+#### Profiling
+
+As seen below, we profiled both SAMtools and BCFtools. Both results are shown,
+but we focused moreon SAMtools than BCFtools, since SAMtools runs considerably
+longer than BCFtools for a given sample
+
 #### Profiling SAMtools
 
 Profling was completed using the [gprof](https://sourceware.org/binutils/docs/gprof/)
@@ -385,6 +391,16 @@ These three functions are the focus of our OpenMP parallelization attempt
 outlined below.
 
 #### Profiling BCFtools
+To run ```gprof``` on BCFtools, we used the following commands inside the
+local BCFtools directory:
+
+```bash
+autoheader
+autoconf -Wno-syntax
+LDFLAGS='-lprofiler -pg' CFLAGS='-lprofiler -pg' ./configure
+CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -c -v > test.bcf
+gprof ./bcftools ./gmon.out
+```
 Below is a sample of our BCFtools profiling. The full output file can be
 viewed in the ```data/profiling``` directory.
 
@@ -468,17 +484,39 @@ both DNA and RNA of Sample 1 below:
 
 #### Parallelization Techniques
 
-1. **Binning** - our first method of speeding up the SNP analysis involved what
+**1. Binning** - our first method of speeding up the SNP analysis involved what
 we termed "binning" or distributing the DNA and RNA reads (sequence strings)
 into bins amongst cores of a CPU. We distributed them into sequential chunks
 from $10^4$ to $10^9$. This was done initially with one chromosome on one core
 to determine the ideal bin size. After determining the ideal bin size, we tested
-that bin size across a number of cores from 2 to 20. Results are discussed in
-the results sections below.
+that bin size across a number of cores from 2 to 20. A sample batch script for
+binning is outlined in the "Running ```mpileup``` batch jobs" section above, and
+Results are discussed in the "Results" section below.
 
-2. **OpenMP** -
-3. **MPI** -
-4. **Load Balancing** -
+**2. OpenMP** -
+
+**3. MPI** -
+
+**4. Load Balancing** - We often see a non-linear speed-up due to the data's
+heterogeneity as outlined above. In order to process the heterogeneous data we
+developed a load balancing simulator. The simulator
+(```simulateLoadBalance.py```), batch script, sample input
+and output files are found in the ```load_balance_simulator``` directory. It
+simulates four different sorting
+techniques to parallelize the data across a range of cores.
+
+1. Ascending data size processing
+2. Original data order processing
+3. Random order processing
+4. Descending data size processing
+
+**Running Load Balancing Simulations**
+
+To run the simulator, use a command similar to the following:
+```Bash
+$ pypy simulateLoadBalance.py input_sample.txt > output.simulate.txt
+```
+
 
 ---
 
@@ -495,13 +533,34 @@ discussion about overheads and optimizations done)
 |![bin2](report_images/binning3.png)  |  ![bin4](report_images/binning4.png)|
 |![bin5](report_images/binning5.png)  |  ![bin6](report_images/binning6.png)|
 
+**2. OpenMP**
+EXPLAIN SAMtools OpenMP with results.
+
+Ultimately unable to properly compile BCFtools on the HMSRC cluster, and due to
+it's relatively low runtime when compared to SAMtools we did not further attempt
+to parallelize BCFtools.
+
+**3. MPI**
+
+ADD ANALYSIS HERE
+
+**4. Load Balancing**
+
+|  DNA  | RNA |
+|:---:|:---:|
+|![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
+|![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
 
 ---
 
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
+- Our primary advanced features we developed is the load balancing simulation.
+This module can be used to simulate balancing blah blah blah.
 - We initially had a very hard timing profiling the SAMtools library. We spent more
-than two weeks trying to get the gprof profiler to run, and finally had a
-breakthrough when we realized we needed to include
+than two weeks attempting to run the gprof profiler, and finally had a
+breakthrough when we learned we needed to include the ```-pg``` flag in both the
+CGLAFS and LDFLAGS sections of the assiciated ```Makefile```. This same technique
+was used to compile our OpenMP parallelization attempts.
 - OpenMP was not trivial, and unsuccessful in speeding up execution time
 
 Use of load balancing is an advanced feature in my opinion.
@@ -510,8 +569,10 @@ Use of load balancing is an advanced feature in my opinion.
 
 ### Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…
 
-We are very happy with the speedup we achieved through binning. After determining
+We are very happy with the speedup we achieved through binning and simulated load balancing. After determining
 the optimal bin size of 1 million
+
+- We would have liked to include Spark. ADD COMMENTARY HERE
 
 ---
 
