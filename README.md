@@ -534,6 +534,16 @@ Results for our OpenMP tests are found in the
 
 **3. MPI** - FILL IN HERE!
 
+We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
+a shared compute cluster used by thousand of users, we do not have root access to 
+install the packages into the default system file paths for MPI. As such, we built
+a custom environment 
+
+
+
+
+
+
 To run MPI on the HMSRC cluster the following modules have to be loaded in advanced
 with these commands:
 ```Bash
