@@ -70,7 +70,7 @@ hence the need for parallelization.
 In clinical applications, this long analysis is too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
 days to 1-2 hours, which in a clinical setting could result in a life saved versus lost.
 
-Given the shear size of the data and computing power required for analysis, we
+Given the sheer size of the data and computing power required for analysis, we
 describe our project as both "Big Data" and "Big Compute."
 
 ---
@@ -209,7 +209,7 @@ $ make
 $ make install
 ```
 
-All program suit makefiles use the ```-O2``` optimization flag by default.
+All program suite makefiles use the ```-O2``` optimization flag by default.
 We did not update this flag throughout the project.
 
 #### SAMtools & BCFtools Dataflow
@@ -545,6 +545,17 @@ $ module load openmpi/2.0.1
 heterogeneity as outlined above.
 
 # Discuss trying to read the index file here.
+
+For every alignment (.bam) file, an index (.bai) file can be generated. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly helpful since an alignment file is typically quite big (for example, our alignment files are ~10GB). 
+
+Our plan was to read the index file by converting it into text format, so that we could analyze it to try and determine the optimal way to divide the data during the analysis computation. 
+
+An alignment (.bam) file can be easily converted from binary to human-readable text format (.sam, which stands for Sequence Alignment Map), as viewing the sequence in a human-readble form has many uses. However, since index files are mostly used only to be able to jump to the relavant sections of the alignment file, converting an index file into a human-readable text format is not a straightforward task. We realized just how difficult a task this was once we started working on this project. We consistently kept running into roadblocks while trying to read the index file. Multiple approaches were implemented; unfortunately none of them worked out the way we had hoped. 
+
+Our first approach was to understand where the samtools code was reading the index file. We tried to append the code so that it would read the index file and try to convert it to a text format. That did not work. We also tried to use an open-source library for samtools written in Java (htsjdk) so that we could read the metadata from the index files. That did not work either. Lack of domain knowledge about genomic sequening data hindered us from writing our own code to convert the index file.
+
+After we realized that we really needed to move on and focus on other aspects of the project, we decided to try different techniques to balance the load and examine which technique did better.
+
 
 In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
