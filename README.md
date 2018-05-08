@@ -248,7 +248,7 @@ what ```mpileup```'s standard output looks like.
 #### Running ```mpileup``` batch jobs
 In order to automate parallelization speedup analysis of multiple samples with different
 parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample batch files are found in the ```data/batch_scripts``` directory.
+Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
 
 Here is a sample from one of the
 perl files used for the binning technique described below:
@@ -328,7 +328,7 @@ profiler. In order to get the profiler to run, we had to include both the
 SAMtools ```Makefile```.
 
 Below is a sample of our SAMtools profiler results. The
-full profiler text can be found in the ```data/profiling``` directory.
+full profiler text can be found in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -420,7 +420,7 @@ CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -
 gprof ./bcftools ./gmon.out
 ```
 Below is a sample of our BCFtools profiling. The full output file can be
-viewed in the ```data/profiling``` directory.
+viewed in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -534,12 +534,84 @@ Results for our OpenMP tests are found in the
 
 **3. MPI** - FILL IN HERE!
 
-To run MPI on the HMSRC cluster the following modules have to be loaded in advanced
-with these commands:
+We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
+a shared compute cluster used by thousand of users, we do not have root access to
+install the packages into the default system file paths for MPI. As such, we built
+a custom environment based on Anaconda.
+
+The anaconda package that was pre-installed on the cluster was loaded using the following
+command:
+
 ```Bash
-$ module load gcc/6.2.0
-$ module load openmpi/2.0.1
+module load conda2/4.2.13
 ```
+
+We then installed pip, a custom python package manager as follows:
+
+```Bash
+conda install pip
+```
+
+A custom python environment and the mpi4py library was then installed using
+the following command:
+
+```
+pip install virtualenv
+virtualenv cs205
+source cs205 activate
+pip install mpi4py
+```
+
+As we had compatability issues using the openmpi package provided
+on the cluster with the mpi4py package that we had installed. We
+manually installed openmpi-3.0.1 into a custom local path via the
+following command aftere downloading the package into a local directory.
+
+```Bash
+./configure --prefix=$PWD/cs205_mpi/
+make
+make install
+```
+
+The version of mpi in the current conda environment was then utilized
+for running mpi rather than the default openmpi installed on the
+cluster
+```Bash
+/home/kt184/.conda/envs/cs205/bin/mpirun
+```
+
+Having set up openmpi with mpi4py in our environment, we then wrote a
+job script and then submitted it onto the cluster for the run. The
+MPI job was sent to an 'MPI' queue that was set up on the cluster
+and for which we had to request special permission to use.
+
+A sample jobscript for running the mpi python script we had written
+for the project is as follows:
+
+```Bash
+#!/bin/bash
+#SBATCH -p mpi #partition
+#SBATCH -t 0-24:01 #time days-hr:min
+#SBATCH -n 3 #number of tasks
+#SBATCH --mem=8G #memory per job (all cores), GB
+#SBATCH -o %j.out #out file
+#SBATCH -e %j.err #error file
+
+source activate cs205
+
+extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
+/home/kt184/.conda/envs/cs205/bin/mpirun -n 3 python ./runMPIpileup.py 1000000 /n/scratch2/kt184/data/DNA/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta 3 $extension 1 249250621
+```
+
+In the above jobscript, we requested 3 tasks to represent a single master node and 2 worker nodes. The master node would decide upon the job needed to be performed by the slave node, collect back the results of analysis by the slave nodes and compile the results.
+
+The sample python script we used for MPI4py can be found in the link ```mpi_tests/code```
+
+
+The `runMPIpileup.py` python code starts a master node and allow us to vary the number of worker nodes available by MPI. Results are compiled
+by the master node after all the workers have finished their jobs. We then tested how the speedup for the DNA and RNA files varies as the number of cores (processes) available for MPI varies.
+
+
 
 **4. Load Balancing** - We often see a non-linear speed-up due to the data's
 heterogeneity as outlined above.
@@ -560,7 +632,7 @@ After we realized that we really needed to move on and focus on other aspects of
 In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
-and output files are found in the ```load_balance_simulator``` directory. It
+and output timing files are found in the ```load_balance_simulator``` directory. It
 simulates four different sorting
 techniques to parallelize the data across a range of cores.
 
@@ -604,15 +676,16 @@ technique and are pleased with the results.
 
 |  DNA  | RNA |
 |:---:|:---:|
-|![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning2.png)|
-|![bin2](report_images/binning3.png)  |  ![bin4](report_images/binning4.png)|
-|![bin5](report_images/binning5.png)  |  ![bin6](report_images/binning6.png)|
+|![bin1](report_images/binning_dna_bins.png)  |  ![bin3](report_images/binning_rna_bins.png)|
+|![bin2](report_images/binning_dna_time.png)  |  ![bin4](report_images/binning_rna_time.png)|
+|![bin5](report_images/binning_dna_speedup.png)  |  ![bin6](report_images/binning_rna_speedup.png)|
+|![bin7](report_images/dna_binning_table.png) | ![bin8](report_images/rna_binning_table.png) |
 
 **2. OpenMP**
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
 were parallizable in the bam_mpileup function. Module files for each OpenMP
-attempt are in the ```data/open_mp_tests``` directory. The results for our
+attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
 | Function | 1 thread time (seconds) | 8 threads time (seconds)
@@ -633,7 +706,12 @@ to parallelize BCFtools with OpenMP.
 
 **3. MPI**
 
-ADD ANALYSIS HERE
+MPI results follow:
+
+|Execution Time|Speedup|
+|:--:|:--:|
+|![](report_images/mpi_time.png)|![](report_images/mpi_speedup.png)
+||![](report_images/mpi_table.png)
 
 **4. Load Balancing**
 
@@ -641,6 +719,7 @@ ADD ANALYSIS HERE
 |:---:|:---:|
 |![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
 |![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
+|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
 
 ---
 
@@ -650,7 +729,7 @@ This module can be used to simulate balancing blah blah blah.
 - We initially had a very hard timing profiling the SAMtools library. We spent more
 than two weeks attempting to run the gprof profiler, and finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
-CGLAFS and LDFLAGS sections of the assiciated ```Makefile```. This same technique
+CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
 - OpenMP was not trivial, and unsuccessful in speeding up execution time
 
@@ -705,7 +784,7 @@ They appear in the following order:
 
 - Samtools source code is found [here](https://github.com/samtools).
 - Evaluation data, modified source code, simulation and batch scripts, and visualization
-notebooks are found in this repository
+notebooks are all found in this repository
 
 # TODO:
 - Add makefiles for gprof and OpenMP

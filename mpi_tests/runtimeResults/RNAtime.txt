@@ -1,0 +1,9 @@
+Finished 1 cores 2341.018516 time
+Finished 2 cores 1050.454137 time
+Finished 4 cores 515.89984 time
+Finished 8 cores 263.873469 time
+Finished 16 cores 144.668194 time
+Finished 32 cores 78.627554 time
+Finished 64 cores 46.580353 time
+Finished 128 cores 42.151208 time
+

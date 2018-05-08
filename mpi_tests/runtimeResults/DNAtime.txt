@@ -1,0 +1,12 @@
+tail *.out | grep Finished | grep core
+
+Finished 1 cores 1602.731829 time
+Finished 1 cores 1622.531984 time
+Finished 2 cores 801.062617 time
+Finished 4 cores 411.091498 time
+Finished 8 cores 304.68746 time
+Finished 16 cores 114.665329 time
+Finished 32 cores 62.339482 time
+Finished 64 cores 39.894728 time
+Finished 128 cores 28.847915 time
+
