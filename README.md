@@ -559,7 +559,7 @@ heterogeneity as outlined above.
 In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
-and output files are found in the ```load_balance_simulator``` directory. It
+and output timing files are found in the ```load_balance_simulator``` directory. It
 simulates four different sorting
 techniques to parallelize the data across a range of cores.
 
