@@ -537,7 +537,75 @@ Results for our OpenMP tests are found in the
 We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
 a shared compute cluster used by thousand of users, we do not have root access to 
 install the packages into the default system file paths for MPI. As such, we built
-a custom environment 
+a custom environment based on Anaconda.
+
+The anaconda package that was pre-installed on the cluster was loaded using the following
+command:
+
+```Bash
+module load conda2/4.2.13
+```
+
+We then installed pip, a custom python package manager as follows:
+
+```Bash
+conda install pip
+```
+
+A custom python environment and the mpi4py library was then installed using
+the following command:
+
+```
+pip install virtualenv
+virtualenv cs205
+source cs205 activate
+pip install mpi4py
+```
+
+As we had compatability issues using the openmpi package provided
+on the cluster with the mpi4py package that we had installed. We
+manually installed openmpi-3.0.1 into a custom local path via the
+following command aftere downloading the package into a local directory.
+
+```Bash
+./configure --prefix=$PWD/cs205_mpi/
+make
+make install
+```
+
+The version of mpi in the current conda environment was then utilized
+for running mpi rather than the default openmpi installed on the
+cluster
+```Bash
+/home/kt184/.conda/envs/cs205/bin/mpirun
+```
+
+Having set up openmpi with mpi4py in our environment, we then wrote a
+job script and then submitted it onto the cluster for the run. The
+MPI job was sent to an 'MPI' queue that was set up on the cluster
+and for which we had to request special permission to use.
+
+A sample jobscript for running the mpi python script we had written
+for the project is as follows:
+
+```Bash
+#!/bin/bash
+#SBATCH -p mpi #partition
+#SBATCH -t 0-24:01 #time days-hr:min
+#SBATCH -n 3 #number of tasks
+#SBATCH --mem=8G #memory per job (all cores), GB
+#SBATCH -o %j.out #out file
+#SBATCH -e %j.err #error file
+
+source activate cs205
+
+extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
+/home/kt184/.conda/envs/cs205/bin/mpirun -n 3 python ./runMPIpileup.py 1000000 /n/scratch2/kt184/data/DNA/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta 3 $extension 1 249250621
+```
+
+In the above jobscript, we requested 3 tasks to represent a single master node and 2 worker nodes. The master node would decide upon the job needed to be performed by the slave node, collect back the results of analysis by the slave nodes and compile the results.
+
+The sample python script we used for MPI4py can be found in the link "????????????????????"
 
 
 
