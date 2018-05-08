@@ -248,7 +248,7 @@ what ```mpileup```'s standard output looks like.
 #### Running ```mpileup``` batch jobs
 In order to automate parallelization speedup analysis of multiple samples with different
 parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample batch files are found in the ```data/batch_scripts``` directory.
+Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
 
 Here is a sample from one of the
 perl files used for the binning technique described below:
@@ -328,7 +328,7 @@ profiler. In order to get the profiler to run, we had to include both the
 SAMtools ```Makefile```.
 
 Below is a sample of our SAMtools profiler results. The
-full profiler text can be found in the ```data/profiling``` directory.
+full profiler text can be found in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -420,7 +420,7 @@ CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -
 gprof ./bcftools ./gmon.out
 ```
 Below is a sample of our BCFtools profiling. The full output file can be
-viewed in the ```data/profiling``` directory.
+viewed in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -612,7 +612,7 @@ technique and are pleased with the results.
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
 were parallizable in the bam_mpileup function. Module files for each OpenMP
-attempt are in the ```data/open_mp_tests``` directory. The results for our
+attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
 | Function | 1 thread time (seconds) | 8 threads time (seconds)
@@ -656,7 +656,7 @@ This module can be used to simulate balancing blah blah blah.
 - We initially had a very hard timing profiling the SAMtools library. We spent more
 than two weeks attempting to run the gprof profiler, and finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
-CGLAFS and LDFLAGS sections of the assiciated ```Makefile```. This same technique
+CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
 - OpenMP was not trivial, and unsuccessful in speeding up execution time
 
