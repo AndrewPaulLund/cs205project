@@ -151,17 +151,18 @@ toward the bottom of this report.
 ### Description of solution and comparison with existing work
 
 Our project evaluated four primary parallelization techniques for speeding up SNP
-analysis:
-1. Binning - distributing DNA & RNA reads (sequence
-strings) into “bins” amongst cores
-2. OpenMP - shared-memory technique to reduce execution time. This parallelization
+analysis. We start each analysis by sharding the large datasets into smaller data chunks, thereby allowing for parallel analysis. We call this distributing of DNA & RNA reads (sequence strings) “binning.”We generalize their descriptions as follows:
+1. Single-node Parallelization - shared-memory technique to distribute bins amongst
+cores in a single node.
+2. MPI - distributed-memory technique to reduce execution time across multiple
+nodes. This process would spread analysis across independent nodes, and combine
+their results into a overall SNP file. This allows us to use more than 20 cores
+on a single HMSRC cluster node as outlined in the Infrastructure section.
+3. Load balancing - reduce analysis heterogeneity by arranging heterogeneous bin
+sizes in a way that minimizes CPU idle time during the parallelization process. We developed a load balancing simulator described in detail below.
+4. OpenMP - shared-memory technique to reduce execution time. This parallelization
 technique has potential to speed up analysis time on single nodes with multiple
 cores.
-3. MPI - distributed-memory technique to reduce execution time across multiple
-nodes. This process would spread analysis across independent nodes, and combine
-their results into a overall SNP file.
-4. Load balancing - reduce analysis heterogeneity by sorting genome alignment
-index files. We developed a load balancing simulator described in detail below.
 
 Each of these techniques and their results are described in detail in the
 following sections.
@@ -174,11 +175,9 @@ They used OpenMP to try and optimize alignment file sorting.
 
 ### Installing, Running, & Profiling SAMtools
 
-(Technical description of the software design, code baseline, dependencies, how to use the code, and system and environment needed to reproduce your tests)
-
 #### Installing the SAMtools analysis suite
 SAMtools is already available on the HMSRC cluster. In order to download,
-install and run  and  local version for us to modify on the HMSRC login node, we
+install, and run  a  local version for us to modify on the HMSRC login node, we
 performed the following steps:
 
 ```Bash
@@ -191,6 +190,7 @@ $ autoconf
 $ ./configure
 $ make
 $ make install
+
 # SAMtools
 $ git clone https://github.com/samtools/samtools.git
 $ cd samtools
@@ -199,6 +199,7 @@ $ autoconf
 $ ./configure
 $ make
 $ make install
+
 # BCFtools
 $ git clone https://github.com/samtools/bcftools.git
 $ cd bcftools
@@ -219,106 +220,29 @@ The flow of data from alignment and index files is illustrated below.
 <img src="report_images/dataflow.png" width=500>
 
 SAMtools reads the index and alignment files, pipes standard output to BCFtools,
-which identifies SNPs in a data pipeline. The area of parallelization our
-project focused on is the ```mpileup``` function within the SAMtools program
-suite.
+which identifies SNPs in a data pipeline based on a SNP statistical
+model.
 
 #### Running SAMtools on a sample alignment file
-Sample 1 DNA alignment and index files for 10 million reads is found in this
-repository's ```data/sample_data``` directory. We used this file extensively
-for testing due to it's reasonable serial ```mpileup``` runtimes (~30 seconds).
-All our analyses can be easily extended to larger alignment and index files.
-
-The [mpileup](http://www.htslib.org/doc/samtools.html) function was identified
-as the primary overhead in the profiling section below. From source code documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
-
-In order to run ```mpileup``` with associated output timing follow these steps:
-
-```Bash
-# navigate to the local SAMtools installation
-$ cd .../samtools
-$ ./samtools mpileup
-$ time ./samtools mpileup .../HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
-```
-
-Running the above command without ```time``` or ```> /dev/null``` will output
-the read sequences directly to the terminal window and give you an idea of
-what ```mpileup```'s standard output looks like.
-
-#### Running ```mpileup``` batch jobs
-In order to automate parallelization speedup analysis of multiple samples with different
-parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
-
-Here is a sample from one of the
-perl files used for the binning technique described below:
+To run the overall SNP calling process including ```mpileup``` and
+```bcftools``` as the original single-threaded program, use the following command:
 
 ```bash
-#!/usr/bin/perl
-
-use strict;
-use warnings;
-
-my @cores = (1,2,4,8,16,20);
-my @binSize = (10000,100000,1000000,10000000,100000000,1000000000);
-my $bamFile = "/n/scratch2/kt184/data/DNA/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam";
-my $refGenome = "/n/scratch2/kt184/genome/dna/hs37d5.fa";
-my $chrom = "1";
-my $outputJobScriptPrefix = "/home/kt184/scratch/results/testMultiCore/generateScripts/analysisRuntime/sampleDNA2";
-
-for my $core(@cores){
-for my $bin(@binSize){
-
-my $jobScriptFile = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . ".sh";
-my $outputDirectory = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . "/";
-my $outputPrefix = $outputDirectory . "runDNA2." . ".cores" . $core . ".binSize" . $bin;
-system("mkdir $outputDirectory");
-
-open(my $OUTPUT, ">", $jobScriptFile) || die $!;
-
-# Lazy to tab in
-print $OUTPUT "#!/bin/bash\n";
-print $OUTPUT "#SBATCH -p short #partition\n";
-print $OUTPUT "#SBATCH -t 0-12:00 #time days-hr:min\n";
-print $OUTPUT "#SBATCH -c $core #number of cores\n";
-print $OUTPUT "#SBATCH -N 1 #confine cores to 1 node, default\n";
-print $OUTPUT "#SBATCH --mem=8G #memory per job (all cores), GB\n";
-print $OUTPUT "#SBATCH -o %j.out #out file\n";
-print $OUTPUT "#SBATCH -e %j.err #error file\n";
-print $OUTPUT "\n";
-print $OUTPUT "\n";
-print $OUTPUT "module load gcc/6.2.0\n";
-print $OUTPUT "module load samtools/1.3.1\n";
-print $OUTPUT "module load bcftools\n";
-print $OUTPUT "module load perl/5.24.0\n";
-print $OUTPUT "eval \$(perl -I\$HOME/perl5/lib/perl5 -Mlocal::lib)\n";
-
-
-print $OUTPUT "bin_size=$bin\n";
-print $OUTPUT "bamFile=\"$bamFile\"\n";
-print $OUTPUT "refGenome=\"$refGenome\"\n";
-print $OUTPUT "numProcessors=$core\n";
-print $OUTPUT "outputPrefix=$outputPrefix\n";
-print $OUTPUT "chrom=\"$chrom\"\n";
-
-
-print $OUTPUT "/n/scratch2/kt184/results/testMultiCore/runParallelJobScript.pl \$bin_size \$bamFile \$refGenome \$numProcessors \$outputPrefix \$chrom\n";
-
-close($OUTPUT);
-
-print "sbatch " .  $jobScriptFile . "\n";
-}
-}
+$ ./samtools mpileup -Bcf [reference genome] [sample] | bcftools call -O b -c -w > output.bcf
 ```
-#### Profiling
-In order to evaluate specific functions within the SAMtools and BCFtools libraries
-to focus our parallelization speedup techniques on, we completed profiling.
 
-As seen below, we profiled both SAMtools and BCFtools. Both results are shown,
-but we focused more on SAMtools than BCFtools, since SAMtools typically runs more
-than 10-times longer than BCFtools for a given sample. Sample timings for
-SAMtools and BCFtools on the same sample are found in the
-```profiling/runTimes.txt``` file.
+The SAMtools mpileup program converts the binary alignment file (.bam) into the
+`pileup` format. The `pileup` format output is then fed into the BCFtools which
+applies a statistical model to decide if a particular location in the genome
+has a SNP.
+
+We have provided a small sample of the original data - Sample 1 DNA alignment and index files for 10 million reads. It can be found in this
+repository's ```data/sample_data``` directory. We used these specific files extensively
+for initial testing due to it's reasonable serial ```mpileup``` runtimes (~30 seconds).
+Most of our tests then expanded to one chromosome of each sample.
+
+#### Profiling
+Since the SNP analysis is run in a pipe as outlined above, we completed profiling on both SAMtools and BCFtools separately. Both results are shown outlined below.
 
 #### Profiling SAMtools
 
@@ -326,6 +250,16 @@ Profling was completed using the [gprof](https://sourceware.org/binutils/docs/gp
 profiler. In order to get the profiler to run, we had to include both the
 ```-pg``` flag in both the ```CFLAGS``` and ```LDFLAGS``` line items in the
 SAMtools ```Makefile```.
+
+
+To run the gprof profiler on SAMtools use the following commands:
+```bash
+$ autoheader
+$ autoconf -Wno-syntax
+$ LDFLAGS='-lprofiler -pg' CFLAGS='-lprofiler -pg' ./configure
+$ ./samtools mpileup [sample] > /dev/null
+$ gprof ./samtools ./gmon.out
+```
 
 Below is a sample of our SAMtools profiler results. The
 full profiler text can be found in the ```profiling``` directory.
@@ -413,11 +347,11 @@ To run ```gprof``` on BCFtools, we used the following commands inside the
 local BCFtools directory:
 
 ```bash
-autoheader
-autoconf -Wno-syntax
-LDFLAGS='-lprofiler -pg' CFLAGS='-lprofiler -pg' ./configure
-CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -c -v > test.bcf
-gprof ./bcftools ./gmon.out
+$ autoheader
+$ autoconf -Wno-syntax
+$ LDFLAGS='-lprofiler -pg' CFLAGS='-lprofiler -pg' ./configure
+$ CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -c -v > test.bcf
+$ gprof ./bcftools ./gmon.out
 ```
 Below is a sample of our BCFtools profiling. The full output file can be
 viewed in the ```profiling``` directory.
@@ -472,6 +406,54 @@ index % time    self  children    called     name
 -----------------------------------------------
 
 ```
+#### Relative Timing of SAMtools & bcftools
+We also compared timings of SAMtools and BCFtools to see which one typically
+takes longest to complete execution.
+
+Here is a sample of those timings on the same sample:
+
+SAMtools ```mpileup``` function
+```bash
+[kt184@login03 DNA]$ time samtools mpileup -d 100000000000 -Buf /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta ./HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam > /dev/null
+[mpileup] 1 samples in 1 input files
+(mpileup) Max depth is above 1M. Potential memory hog!
+Terminated
+
+real	1m19.174s
+user	0m20.835s
+sys	0m0.976s
+```
+BCFtools ```bcftools``` function
+```bash
+[kt184@login03 DNA]$ time cat DNA.10mil_for_bcftools.file | bcftools call -O b -c -v > test.bcf
+Note: none of --samples-file, --ploidy or --ploidy-file given, assuming all sites are diploid
+
+real	0m9.302s
+user	0m1.235s
+sys	0m0.890s
+```
+Overall, it can be seen that ```mpileup``` execution time is considerably longer than ```bcftools```.
+
+#### Profiling Summary
+Based on profiling and the above timing analysis - SAMtools typically runs more
+than 10-times longer than BCFtools for a given sample - the area of parallelization our
+project focused on is the ```mpileup``` function within the SAMtools program
+suite.  Sample timings for SAMtools and BCFtools on the same sample are found in the
+
+The [mpileup](http://www.htslib.org/doc/samtools.html) function was identified
+as the primary overhead in the profiling section below. From source code documentation, mpileup "Generate[s] VCF, BCF or pileup for one or multiple BAM files. Alignment records are grouped by sample (SM) identifiers in @RG header lines. If sample identifiers are absent, each input file is regarded as one sample."
+
+In order to run ```mpileup``` follow these steps:
+
+```Bash
+# navigate to the local SAMtools installation
+$ cd .../samtools
+$ ./samtools mpileup
+$ ./samtools mpileup .../HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.10mil.bam
+```
+
+Running the above command with ```time``` at the beginning and ```> /dev/null``` will output the read sequences directly to the terminal window and give you an idea of
+what ```mpileup```'s standard output looks like.
 
 ---
 
@@ -502,6 +484,72 @@ to determine the ideal bin size. After determining the ideal bin size, we tested
 that bin size across a number of cores from 2 to 20. A sample batch script for
 binning is outlined in the "Running ```mpileup``` batch jobs" section above, and
 Results are discussed in the "Results" section below.
+
+##### Running ```mpileup``` batch jobs
+In order to automate parallelization speedup analysis of multiple samples with different
+parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
+Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
+
+Here is a sample from one of the
+perl files used for the binning technique described below:
+
+```bash
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+my @cores = (1,2,4,8,16,20);
+my @binSize = (10000,100000,1000000,10000000,100000000,1000000000);
+my $bamFile = "/n/scratch2/kt184/data/DNA/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam";
+my $refGenome = "/n/scratch2/kt184/genome/dna/hs37d5.fa";
+my $chrom = "1";
+my $outputJobScriptPrefix = "/home/kt184/scratch/results/testMultiCore/generateScripts/analysisRuntime/sampleDNA2";
+
+for my $core(@cores){
+for my $bin(@binSize){
+
+my $jobScriptFile = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . ".sh";
+my $outputDirectory = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . "/";
+my $outputPrefix = $outputDirectory . "runDNA2." . ".cores" . $core . ".binSize" . $bin;
+system("mkdir $outputDirectory");
+
+open(my $OUTPUT, ">", $jobScriptFile) || die $!;
+
+# Lazy to tab in
+print $OUTPUT "#!/bin/bash\n";
+print $OUTPUT "#SBATCH -p short #partition\n";
+print $OUTPUT "#SBATCH -t 0-12:00 #time days-hr:min\n";
+print $OUTPUT "#SBATCH -c $core #number of cores\n";
+print $OUTPUT "#SBATCH -N 1 #confine cores to 1 node, default\n";
+print $OUTPUT "#SBATCH --mem=8G #memory per job (all cores), GB\n";
+print $OUTPUT "#SBATCH -o %j.out #out file\n";
+print $OUTPUT "#SBATCH -e %j.err #error file\n";
+print $OUTPUT "\n";
+print $OUTPUT "\n";
+print $OUTPUT "module load gcc/6.2.0\n";
+print $OUTPUT "module load samtools/1.3.1\n";
+print $OUTPUT "module load bcftools\n";
+print $OUTPUT "module load perl/5.24.0\n";
+print $OUTPUT "eval \$(perl -I\$HOME/perl5/lib/perl5 -Mlocal::lib)\n";
+
+
+print $OUTPUT "bin_size=$bin\n";
+print $OUTPUT "bamFile=\"$bamFile\"\n";
+print $OUTPUT "refGenome=\"$refGenome\"\n";
+print $OUTPUT "numProcessors=$core\n";
+print $OUTPUT "outputPrefix=$outputPrefix\n";
+print $OUTPUT "chrom=\"$chrom\"\n";
+
+
+print $OUTPUT "/n/scratch2/kt184/results/testMultiCore/runParallelJobScript.pl \$bin_size \$bamFile \$refGenome \$numProcessors \$outputPrefix \$chrom\n";
+
+close($OUTPUT);
+
+print "sbatch " .  $jobScriptFile . "\n";
+}
+}
+```
 
 **2. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
 parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
