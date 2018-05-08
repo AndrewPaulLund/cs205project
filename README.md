@@ -605,22 +605,13 @@ extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
 
 In the above jobscript, we requested 3 tasks to represent a single master node and 2 worker nodes. The master node would decide upon the job needed to be performed by the slave node, collect back the results of analysis by the slave nodes and compile the results.
 
-The sample python script we used for MPI4py can be found in the link "????????????????????"
-=======
-a custom environment
+The sample python script we used for MPI4py can be found in the link ```mpi_tests/code```
 
 
+The `runMPIpileup.py` python code starts a master node and allow us to vary the number of worker nodes available by MPI. Results are compiled
+by the master node after all the workers have finished their jobs. We then tested how the speedup for the DNA and RNA files varies as the number of cores (processes) available for MPI varies.
 
 
-
-
-
-To run MPI on the HMSRC cluster the following modules have to be loaded in advanced
-with these commands:
-```Bash
-$ module load gcc/6.2.0
-$ module load openmpi/2.0.1
-```
 
 **4. Load Balancing** - We often see a non-linear speed-up due to the data's
 heterogeneity as outlined above.
