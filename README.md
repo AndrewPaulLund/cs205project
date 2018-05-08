@@ -679,23 +679,34 @@ Results for our OpenMP tests are found in the
 
 ### Results
 **1. Binning**
+We tried to shard the data into "small" bins in order to allow parallel execution
+amongst cores. Thus, having more bins allows more parallelization, and thus a greater
+speedup. However, it can be foreseen that if there are too many bins, there will be larger overheads due to splitting the data, core execution and communication, leading to a potential increase in overall runtime. There is thus a need to find the optimal bin size
+in which the overall runtime can be reduced by parallelization while minimizing the overheads from having too many bins.
 
 There are two principal steps to our binning parallelization technique.
-1. Determine the minimum bin size for sequence reads.
-2. Spread bins across cores from 2-20
+1. Determine the minimum bin size for sequence reads
+2. Spread bins of ideal size across cores from 2-20 and analyze runtime and speedup
 
 As seen below, we determined that at least 1,000,000 reads per bin is the optimal
 number. For both DNA and RNA, the one chromosome analysis runtime decreases
-precipitously from 10,000 to 1,000,000 then levels off. We also decided to use
+from 10,000 to 100,000 then levels off. We also decided to use
 1,000,000 as the optimal size as increasing the bin size further will reduce the
 total number of bins for a sample which reduces the benefit of parallelization.
+
+With a bin size of 1 million, we would like to note that one chromosome will be
+limited to ~250 bins, thus allowing us in principle to use up to ~250 parallel
+processes for SNP analysis.
+
+|  DNA  | RNA |
+|:---:|:---:|
+|![bin1](report_images/binning_dna_bins.png)  |  ![bin3](report_images/binning_rna_bins.png)|
 
 As seen in the time and speedup plots, we see excellent speedup for our binning
 technique and are pleased with the results.
 
 |  DNA  | RNA |
 |:---:|:---:|
-|![bin1](report_images/binning_dna_bins.png)  |  ![bin3](report_images/binning_rna_bins.png)|
 |![bin2](report_images/binning_dna_time.png)  |  ![bin4](report_images/binning_rna_time.png)|
 |![bin5](report_images/binning_dna_speedup.png)  |  ![bin6](report_images/binning_rna_speedup.png)|
 |![bin7](report_images/dna_binning_table.png) | ![bin8](report_images/rna_binning_table.png) |
