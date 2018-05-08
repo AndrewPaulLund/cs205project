@@ -535,9 +535,9 @@ Results for our OpenMP tests are found in the
 **3. MPI** - FILL IN HERE!
 
 We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
-a shared compute cluster used by thousand of users, we do not have root access to 
+a shared compute cluster used by thousand of users, we do not have root access to
 install the packages into the default system file paths for MPI. As such, we built
-a custom environment 
+a custom environment
 
 
 
@@ -633,7 +633,12 @@ to parallelize BCFtools with OpenMP.
 
 **3. MPI**
 
-ADD ANALYSIS HERE
+MPI results follow:
+
+|Execution Time|Speedup|
+|:--:|:--:|
+|![](report_images/mpi_time.png)|![](report_images/mpi_speedup.png)
+||![](report_images/mpi_table.png)
 
 **4. Load Balancing**
 
@@ -641,6 +646,7 @@ ADD ANALYSIS HERE
 |:---:|:---:|
 |![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
 |![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
+|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
 
 ---
 
