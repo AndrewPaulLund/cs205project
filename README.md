@@ -11,7 +11,7 @@ Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
 
 [Genomic sequencing](https://en.wikipedia.org/wiki/DNA_sequencing) is the process
 of determining the order of nucleotides in an individual. A human genome has
-3 billion nucleotides in the form of four letters (As, Cs, Gs, and Ts).
+3 billion nucleotides in the form of four letters (A, C, G, and T).
 
 One of the principal application of genomic sequencing analysis is identifying single
 nucleotide polymorphisms (SNP).
@@ -615,8 +615,6 @@ by the master node after all the workers have finished their jobs. We then teste
 
 **4. Load Balancing** - We often see a non-linear speed-up due to the data's
 heterogeneity as outlined above.
-
-# Discuss trying to read the index file here.
 
 For every alignment (.bam) file, an index (.bai) file can be generated. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly helpful since an alignment file is typically quite big (for example, our alignment files are ~10GB). 
 
