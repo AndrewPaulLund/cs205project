@@ -461,7 +461,7 @@ of the data heterogeneity and profiling analysis as described in previous sectio
 1. Single-node Parallelization - shared-memory technique to distribute bins amongst
 cores in a single node.
 2. MPI - distributed-memory technique to reduce execution time across multiple
-nodes. This process would spread analysis across independent nodes, and combine
+processes spanning multiple nodes. This technique would spread analysis across independent processes, and combine
 their results into a overall SNP file. This allows us to use more than 20 cores
 on a single HMSRC cluster node as outlined in the Infrastructure section.
 3. Load balancing - reduce analysis heterogeneity by arranging heterogeneous bin
@@ -486,15 +486,6 @@ to determine the ideal bin size. After determining the ideal bin size, we tested
 that bin size across a number of cores from 2 to 20. We were limited to 20 cores
 on a single node on the HMSRC cluster as outlined in the "Infrastructure" section.
 
-We first wrote a Perl script (runParallelJobScript.pl) to automatically generate the bins needed for the parallelization.
-At the same time the script runs each of the bins as a parallel process. Once all the subjobs are done,
-the Perl script would then combine all the results into one.
-
-As there were multiple different parameters that needed to be tested and also
-because the cluster mainly supports the submission of jobs through the use of a
-jobscript, we generated a custom Perl script (./batch_scripts/rna.sample1.pl) to also generate the tens of jobscripts
-we needed while varying the different paramters (e.g. file used, number of cores etc.).
-
 A sample batch script for binning is outlined in the "Running ```mpileup``` batch jobs section above.
 
 Results are discussed in the "Results" section below.
@@ -504,12 +495,159 @@ In order to automate parallelization speedup analysis of multiple samples with d
 parameters, we used the [Perl](https://www.perl.org/) library [Parallel::ForkManager](http://search.cpan.org/~dlux/Parallel-ForkManager-0.7.5/ForkManager.pm) and batch scripts on the HMSRC cluster. The Perl script does both the
 automated binning and batch parallel runs of the different bin sizes.
 
-Sample job submission script files are found in the ```binning_tests/batch_scripts``` directory.
+We first wrote a Perl script ```runParallelJobScript.pl``` to automatically generate the bins needed for the parallelization.
+At the same time the script runs each of the bins as a parallel process. Once all the subjobs are done,
+the Perl script would then combine all the results into one.
 
-Here is a sample from one of the
-perl files used for the binning technique described below:
+As there were multiple different parameters that needed to be tested and also
+because the cluster mainly supports the submission of jobs through the use of a
+jobscript, we generated a custom Perl script (./batch_scripts/rna.sample1.pl) to also generate the tens of jobscripts
+we needed while varying the different paramters (e.g. file used, number of cores etc.).
 
-**2. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
+Sample job submission script files are found in the ```binning_tests``` directory.
+
+**2. MPI** - We used MPI to extend the number of cores that we could utlize for
+binning from the single-node limited 20 to a theoretical maximum of 640. We only
+went up to 128, but future research will include further expansion and analysis.
+
+We performed the MPI analysis on the Harvard Medical School cluster. As the cluster is
+a shared compute cluster used by thousand of users, we do not have root access to
+install the packages into the default system file paths for MPI. As such, we built
+a custom environment based on Anaconda.
+
+The anaconda package that was pre-installed on the cluster was loaded using the following
+command:
+
+```Bash
+$ module load conda2/4.2.13
+```
+
+We then installed pip, a custom python package manager as follows:
+
+```Bash
+$ conda install pip
+```
+
+A custom python environment and the mpi4py library was then installed using
+the following command:
+
+```
+$ pip install virtualenv
+$ virtualenv cs205
+$ source cs205 activate
+$ pip install mpi4py
+```
+
+As we had compatibility issues using the openmpi package provided
+on the cluster with the mpi4py package that we had installed. We
+manually installed openmpi-3.0.1 into a custom local path via the
+following command after downloading the package into a local directory.
+
+```Bash
+$ ./configure --prefix=$PWD/cs205_mpi/
+$ make
+$ make install
+```
+
+The version of mpi in the current conda environment was then utilized
+for running mpi rather than the default openmpi installed on the
+cluster.
+
+```Bash
+$ /home/kt184/.conda/envs/cs205/bin/mpirun
+```
+
+Having set up openmpi with mpi4py in our environment, we then wrote a
+job script and submitted it onto the cluster for the run. The
+MPI job was sent to an 'MPI' queue that was set up on the cluster
+and for which we had to request special permission to use.
+
+A sample jobscript for running the mpi python script we wrote
+for the project is as follows:
+
+```Bash
+#!/bin/bash
+#SBATCH -p mpi #partition
+#SBATCH -t 0-24:01 #time days-hr:min
+#SBATCH -n 3 #number of tasks
+#SBATCH --mem=8G #memory per job (all cores), GB
+#SBATCH -o %j.out #out file
+#SBATCH -e %j.err #error file
+
+source activate cs205
+
+extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
+/home/kt184/.conda/envs/cs205/bin/mpirun -n 3 python ./runMPIpileup.py 1000000 /n/scratch2/kt184/data/DNA/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta 3 $extension 1 249250621
+
+```
+
+In the above jobscript, we requested 3 tasks to represent a single master process and 2 worker processes. The master process would decide upon the job needed to be performed by each worker process, collect back the results of analysis by the worker processes and compile the results.
+
+The sample python script we used for mpi4py can be found in the ```mpi_tests/code``` directory.
+
+The `runMPIpileup.py` python script starts a master process and allow us to vary the number of worker processes utilized for MPI. Results are compiled
+by the master process after all the workers have finished their jobs. We then tested how the speedup for the DNA and RNA files varies as the number of cores (processes) utilized for MPI varies.
+
+**3. Load Balancing** - Given the heterogeneity of the data as described above,
+we expect parallelization techniques like binning and MPI to result in an increase
+in idle CPU time as the number of parallel processes increase. By sorting, or "load
+balancing" the data as it is distributed amongst parallel processes, we hope to reduce
+the proportion of CPU idle time and wasted processing power.
+
+Every genome alignment (.bam) file has an accompanying index (.bai) file. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly efficient since an alignment file is typically quite large (for example, our alignment files are ~10GB).
+
+Thus, in principle, by studying the structure of the index file, we should be able
+to smartly and quickly identify the distribution of the heterogeneous data, sort it by chunk size size (smartly binning), distribute the work evenly among processes,
+and reduce the overall analysis time as compared to the current sequential analysis methodology.
+
+To this end, our original plan was to read the binary index file by converting it into text format, so that we could analyze it as described above to try and determine the optimal way to sort the data during the analysis computation.
+
+An alignment (.bam) file can be easily converted from binary to human-readable text format (.sam, which stands for Sequence Alignment Map), as viewing the sequence in a human-readable form has many uses. However, since index files are mostly used only to be able to jump to the relevant sections of the alignment file, converting an index file into a human-readable text format is not a straightforward task. We realized just how difficult a task this was once we started working on this project. We consistently ran into roadblocks while trying to read the index file. Multiple approaches were implemented; unfortunately none of them worked out.
+
+Our first approach was to understand where the SAMtools code was reading the index file. We tried to append the code so that it would read the index file and try to convert it to a text format. That did not work. We also tried to use an open-source library for SAMtools written in Java, "htsjdk," so that we could read the metadata from the index files. That did not work either. Lack of domain knowledge about genomic sequencing data hindered us from writing our own code to convert the index file. Here is a sample of one of the
+attempts to parse the index file into human-readable text:
+
+```Bash
+public class ReadIndexCustom {
+
+    public static void main(String[] args) throws IOException {
+        QueryInterval queryInterval = new QueryInterval(1,1,10000000);
+        File file = new File(args[0]);
+        BAMFileReader br = new BAMFileReader(null, file, false, false, null, null, null);
+        BAMIndex index = br.getIndex();
+        final BAMFileSpan fileSpan = index.getSpanOverlapping(queryInterval.referenceIndex, queryInterval.start, queryInterval.end);
+        System.out.println(fileSpan);
+
+    }
+
+}
+```
+After these failed attempts to read the index file, we decided to implement a load balancing simulator.
+
+#### Load Balancing Simulator
+In order to process the heterogeneous data we
+developed a load balancing simulator. The simulator
+(```simulateLoadBalance.py```), batch script, sample input
+and output timing files are found in the ```load_balance_simulator``` directory. It
+simulates four different sorting
+techniques to parallelize the data across a range of cores.
+
+1. Ascending data size processing
+2. Original data order processing
+3. Random order processing
+4. Descending data size processing
+
+Results for these four sorting techniques are discussed in the "Results" section
+below.
+
+**Running Load Balancing Simulations**
+
+To run the simulator, use a command similar to the following:
+```Bash
+$ pypy simulateLoadBalance.py input_sample.txt > output.simulate.txt
+```
+
+**4. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
 parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
 these functions are found in the SAMtools library, specifically in the
 ```bam_plcmd.c``` file.
@@ -537,151 +675,9 @@ command.
 Results for our OpenMP tests are found in the
 "Results" section below.
 
-
-**3. MPI** - FILL IN HERE!
-
-We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
-a shared compute cluster used by thousand of users, we do not have root access to
-install the packages into the default system file paths for MPI. As such, we built
-a custom environment based on Anaconda.
-
-The anaconda package that was pre-installed on the cluster was loaded using the following
-command:
-
-```Bash
-module load conda2/4.2.13
-```
-
-We then installed pip, a custom python package manager as follows:
-
-```Bash
-conda install pip
-```
-
-A custom python environment and the mpi4py library was then installed using
-the following command:
-
-```
-pip install virtualenv
-virtualenv cs205
-source cs205 activate
-pip install mpi4py
-```
-
-As we had compatability issues using the openmpi package provided
-on the cluster with the mpi4py package that we had installed. We
-manually installed openmpi-3.0.1 into a custom local path via the
-following command aftere downloading the package into a local directory.
-
-```Bash
-./configure --prefix=$PWD/cs205_mpi/
-make
-make install
-```
-
-The version of mpi in the current conda environment was then utilized
-for running mpi rather than the default openmpi installed on the
-cluster
-```Bash
-/home/kt184/.conda/envs/cs205/bin/mpirun
-```
-
-Having set up openmpi with mpi4py in our environment, we then wrote a
-job script and then submitted it onto the cluster for the run. The
-MPI job was sent to an 'MPI' queue that was set up on the cluster
-and for which we had to request special permission to use.
-
-A sample jobscript for running the mpi python script we had written
-for the project is as follows:
-
-```Bash
-#!/bin/bash
-#SBATCH -p mpi #partition
-#SBATCH -t 0-24:01 #time days-hr:min
-#SBATCH -n 3 #number of tasks
-#SBATCH --mem=8G #memory per job (all cores), GB
-#SBATCH -o %j.out #out file
-#SBATCH -e %j.err #error file
-
-source activate cs205
-
-extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
-/home/kt184/.conda/envs/cs205/bin/mpirun -n 3 python ./runMPIpileup.py 1000000 /n/scratch2/kt184/data/DNA/HG00096.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam /home/kt184/scratch/data/genome/KT_package/icgc_genome_broadvariant/Homo_sapiens_assembly19.fasta 3 $extension 1 249250621
-```
-
-In the above jobscript, we requested 3 tasks to represent a single master node and 2 worker nodes. The master node would decide upon the job needed to be performed by the slave node, collect back the results of analysis by the slave nodes and compile the results.
-
-The sample python script we used for MPI4py can be found in the link ```mpi_tests/code```
-
-
-The `runMPIpileup.py` python code starts a master node and allow us to vary the number of worker nodes available by MPI. Results are compiled
-by the master node after all the workers have finished their jobs. We then tested how the speedup for the DNA and RNA files varies as the number of cores (processes) available for MPI varies.
-
-
-
-**4. Load Balancing** - We often see a non-linear speed-up due to the data's
-heterogeneity as outlined above.
-
-#### Index Reading Attempt
-For every alignment (.bam) file, an index (.bai) file can be generated. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly helpful since an alignment file is typically quite big (for example, our alignment files are ~10GB).
-
-Our plan was to read the index file by converting it into text format, so that we could analyze it to try and determine the optimal way to divide the data during the analysis computation.
-
-An alignment (.bam) file can be easily converted from binary to human-readable text format (.sam, which stands for Sequence Alignment Map), as viewing the sequence in a human-readble form has many uses. However, since index files are mostly used only to be able to jump to the relavant sections of the alignment file, converting an index file into a human-readable text format is not a straightforward task. We realized just how difficult a task this was once we started working on this project. We consistently kept running into roadblocks while trying to read the index file. Multiple approaches were implemented; unfortunately none of them worked out the way we had hoped.
-
-Our first approach was to understand where the samtools code was reading the index file. We tried to append the code so that it would read the index file and try to convert it to a text format. That did not work. We also tried to use an open-source library for samtools written in Java (htsjdk) so that we could read the metadata from the index files. That did not work either. Lack of domain knowledge about genomic sequening data hindered us from writing our own code to convert the index file.
-
-```Bash
-public class ReadIndexCustom {
-
-    public static void main(String[] args) throws IOException {
-        QueryInterval queryInterval = new QueryInterval(1,1,10000000);
-        File file = new File(args[0]);
-        BAMFileReader br = new BAMFileReader(null, file, false, false, null, null, null);
-        BAMIndex index = br.getIndex();
-        final BAMFileSpan fileSpan = index.getSpanOverlapping(queryInterval.referenceIndex, queryInterval.start, queryInterval.end);
-        System.out.println(fileSpan);
-
-    }
-
-}
-```
-
-
-After we realized that we really needed to move on and focus on other aspects of the project, we decided to try different techniques to balance the load and examine which technique did better.
-
-
-#### Load Balancing Simulator
-In order to process the heterogeneous data we
-developed a load balancing simulator. The simulator
-(```simulateLoadBalance.py```), batch script, sample input
-and output timing files are found in the ```load_balance_simulator``` directory. It
-simulates four different sorting
-techniques to parallelize the data across a range of cores.
-
-1. Ascending data size processing
-2. Original data order processing
-3. Random order processing
-4. Descending data size processing
-
-Results for these four sorting techniques are discussed in the "Results" section
-below.
-
-**Running Load Balancing Simulations**
-
-To run the simulator, use a command similar to the following:
-```Bash
-$ pypy simulateLoadBalance.py input_sample.txt > output.simulate.txt
-```
-
-
 ---
 
 ### Results
-
-(Performance evaluation (speed-up, throughput, weak and strong scaling) and
-discussion about overheads and optimizations done)
-
 **1. Binning**
 
 There are two principal steps to our binning parallelization technique.
@@ -810,9 +806,4 @@ They appear in the following order:
 notebooks are all found in this repository
 
 # TODO:
-- Add makefiles for gprof and OpenMP
-- Add OpenMP trial files
-- Add R script for plots
-- Add MPI work
-- Add load balancing work
-- mpileup vs. bcftools runtimes (a lot more time for mpileup)
+- ADD LOAD BALANCING SIMULATOR DESCRIPTION
