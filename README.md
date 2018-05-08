@@ -486,6 +486,15 @@ to determine the ideal bin size. After determining the ideal bin size, we tested
 that bin size across a number of cores from 2 to 20. We were limited to 20 cores
 on a single node on the HMSRC cluster as outlined in the "Infrastructure" section.
 
+We first wrote a Perl script (runParallelJobScript.pl) to automatically generate the bins needed for the parallelization.
+At the same time the script runs each of the bins as a parallel process. Once all the subjobs are done,
+the Perl script would then combine all the results into one.
+
+As there were multiple different parameters that needed to be tested and also
+because the cluster mainly supports the submission of jobs through the use of a
+jobscript, we generated a custom Perl script (./batch_scripts/rna.sample1.pl) to also generate the tens of jobscripts
+we needed while varying the different paramters (e.g. file used, number of cores etc.).
+
 A sample batch script for binning is outlined in the "Running ```mpileup``` batch jobs section above.
 
 Results are discussed in the "Results" section below.
