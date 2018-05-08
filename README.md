@@ -148,28 +148,17 @@ toward the bottom of this report.
 
 ---
 
-### Description of solution and comparison with existing work
+#### Data Heterogeneity
+A key attribute of the data, and all genomic alignment files is that it is
+extremely heterogeneous. Each chunk of data can have orders of magnitude different
+number of reads (genome sequence strings). This makes sequentially processing
+the alignment files very uneven. This unpredictable sizing is illustrated well for
+both DNA and RNA of Sample 1 below:
 
-Our project evaluated four primary parallelization techniques for speeding up SNP
-analysis. We start each analysis by sharding the large datasets into smaller data chunks, thereby allowing for parallel analysis. We call this distributing of DNA & RNA reads (sequence strings) “binning.”We generalize their descriptions as follows:
-1. Single-node Parallelization - shared-memory technique to distribute bins amongst
-cores in a single node.
-2. MPI - distributed-memory technique to reduce execution time across multiple
-nodes. This process would spread analysis across independent nodes, and combine
-their results into a overall SNP file. This allows us to use more than 20 cores
-on a single HMSRC cluster node as outlined in the Infrastructure section.
-3. Load balancing - reduce analysis heterogeneity by arranging heterogeneous bin
-sizes in a way that minimizes CPU idle time during the parallelization process. We developed a load balancing simulator described in detail below.
-4. OpenMP - shared-memory technique to reduce execution time. This parallelization
-technique has potential to speed up analysis time on single nodes with multiple
-cores.
-
-Each of these techniques and their results are described in detail in the
-following sections.
-
-A literature source we used for our initial profiling analysis is Weeks and Luecke's 2017
-paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf).
-They used OpenMP to try and optimize alignment file sorting.
+|  Index File Distribution  | Heterogeneity |
+|:---:|:---:|
+|![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
+|![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
 
 ---
 
@@ -455,99 +444,61 @@ overall efficiency of the entire SNP analysis.
 
 ---
 
+### Description of speedup solutions and comparison with existing work
+
+#### Literature
+A literature source we used for our initial profiling analysis is Weeks and Luecke's 2017
+paper, ["Performance Analysis and Optimization of SAMtools Sorting"](papers/samtoolsPaper.pdf).
+They used OpenMP to try and optimize the SAMtools ```sort``` program, which
+attempts to arrange alignment files in a predefined and ordered format. We were inspired
+by their work, and attempted to apply similar techniques to the ```mpileup```
+program in SAMtools.
+
+#### Our speedup strategy
+Our project evaluated four primary parallelization techniques for speeding up SNP
+analysis. We start each analysis by sharding the large datasets into smaller data chunks, thereby allowing for parallel analysis. We call this distributing of DNA & RNA reads (sequence strings) “binning.” We devised each of these techniques with consideration
+of the data heterogeneity and profiling analysis as described in previous sections. We generalize their descriptions as follows:
+1. Single-node Parallelization - shared-memory technique to distribute bins amongst
+cores in a single node.
+2. MPI - distributed-memory technique to reduce execution time across multiple
+nodes. This process would spread analysis across independent nodes, and combine
+their results into a overall SNP file. This allows us to use more than 20 cores
+on a single HMSRC cluster node as outlined in the Infrastructure section.
+3. Load balancing - reduce analysis heterogeneity by arranging heterogeneous bin
+sizes in a way that minimizes CPU idle time during the parallelization process. We developed a load balancing simulator described in detail below.
+4. OpenMP - shared-memory technique to reduce execution time. This parallelization
+technique has potential to speed up analysis time on single nodes with multiple
+cores.
+
+Each of these techniques and their results are described in detail in the
+following sections.
+
+---
+
 ### Speedup Techniques
 
-(Technical description of the parallel application and programming models used)
-
-#### Data Heterogeneity
-A key attribute of the data, and all genomic alignment files is that it is
-extremely heterogeneous. Each chunk of data can have orders of magnitude different
-number of reads (genome sequence strings). This makes sequentially processing
-the alignment files very uneven. This unpredictable sizing is illustrated well for
-both DNA and RNA of Sample 1 below:
-
-|  Index File Distribution  | Heterogeneity |
-|:---:|:---:|
-|![DNA1](report_images/DNA_Distribution.png)  |  ![DNA2](report_images/DNA_Heterogeneity.png)|
-|![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
-
-
-#### Parallelization Techniques
-
-**1. Binning** - Our first method of speeding up the SNP analysis involved what
+**1. Binning** - The standard ```mpileup``` runs as a single-threaded process.
+As such our first method of speeding up the SNP analysis involved what
 we termed "binning" or distributing the DNA and RNA reads (sequence strings)
 into bins amongst cores of a CPU. We distributed them into sequential chunks
-from $10^4$ to $10^9$. This was done initially with one chromosome on one core
+from 10,000 to 1,000,000,000. This was done initially with one chromosome on one core
 to determine the ideal bin size. After determining the ideal bin size, we tested
-that bin size across a number of cores from 2 to 20. A sample batch script for
-binning is outlined in the "Running ```mpileup``` batch jobs" section above, and
+that bin size across a number of cores from 2 to 20. We were limited to 20 cores
+on a single node on the HMSRC cluster as outlined in the "Infrastructure" section.
+
+A sample batch script for binning is outlined in the "Running ```mpileup``` batch jobs section above.
+
 Results are discussed in the "Results" section below.
 
-##### Running ```mpileup``` batch jobs
+##### Running ```mpileup``` batch binning jobs:
 In order to automate parallelization speedup analysis of multiple samples with different
-parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
+parameters, we used the [Perl](https://www.perl.org/) library [Parallel::ForkManager](http://search.cpan.org/~dlux/Parallel-ForkManager-0.7.5/ForkManager.pm) and batch scripts on the HMSRC cluster. The Perl script does both the
+automated binning and batch parallel runs of the different bin sizes.
+
+Sample job submission script files are found in the ```binning_tests/batch_scripts``` directory.
 
 Here is a sample from one of the
 perl files used for the binning technique described below:
-
-```bash
-#!/usr/bin/perl
-
-use strict;
-use warnings;
-
-my @cores = (1,2,4,8,16,20);
-my @binSize = (10000,100000,1000000,10000000,100000000,1000000000);
-my $bamFile = "/n/scratch2/kt184/data/DNA/HG00117.mapped.ILLUMINA.bwa.GBR.exome.20120522.bam";
-my $refGenome = "/n/scratch2/kt184/genome/dna/hs37d5.fa";
-my $chrom = "1";
-my $outputJobScriptPrefix = "/home/kt184/scratch/results/testMultiCore/generateScripts/analysisRuntime/sampleDNA2";
-
-for my $core(@cores){
-for my $bin(@binSize){
-
-my $jobScriptFile = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . ".sh";
-my $outputDirectory = $outputJobScriptPrefix . ".cores" . $core . ".binSize" . $bin . "/";
-my $outputPrefix = $outputDirectory . "runDNA2." . ".cores" . $core . ".binSize" . $bin;
-system("mkdir $outputDirectory");
-
-open(my $OUTPUT, ">", $jobScriptFile) || die $!;
-
-# Lazy to tab in
-print $OUTPUT "#!/bin/bash\n";
-print $OUTPUT "#SBATCH -p short #partition\n";
-print $OUTPUT "#SBATCH -t 0-12:00 #time days-hr:min\n";
-print $OUTPUT "#SBATCH -c $core #number of cores\n";
-print $OUTPUT "#SBATCH -N 1 #confine cores to 1 node, default\n";
-print $OUTPUT "#SBATCH --mem=8G #memory per job (all cores), GB\n";
-print $OUTPUT "#SBATCH -o %j.out #out file\n";
-print $OUTPUT "#SBATCH -e %j.err #error file\n";
-print $OUTPUT "\n";
-print $OUTPUT "\n";
-print $OUTPUT "module load gcc/6.2.0\n";
-print $OUTPUT "module load samtools/1.3.1\n";
-print $OUTPUT "module load bcftools\n";
-print $OUTPUT "module load perl/5.24.0\n";
-print $OUTPUT "eval \$(perl -I\$HOME/perl5/lib/perl5 -Mlocal::lib)\n";
-
-
-print $OUTPUT "bin_size=$bin\n";
-print $OUTPUT "bamFile=\"$bamFile\"\n";
-print $OUTPUT "refGenome=\"$refGenome\"\n";
-print $OUTPUT "numProcessors=$core\n";
-print $OUTPUT "outputPrefix=$outputPrefix\n";
-print $OUTPUT "chrom=\"$chrom\"\n";
-
-
-print $OUTPUT "/n/scratch2/kt184/results/testMultiCore/runParallelJobScript.pl \$bin_size \$bamFile \$refGenome \$numProcessors \$outputPrefix \$chrom\n";
-
-close($OUTPUT);
-
-print "sbatch " .  $jobScriptFile . "\n";
-}
-}
-```
 
 **2. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
 parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
@@ -662,8 +613,36 @@ by the master node after all the workers have finished their jobs. We then teste
 **4. Load Balancing** - We often see a non-linear speed-up due to the data's
 heterogeneity as outlined above.
 
-# Discuss trying to read the index file here.
+#### Index Reading Attempt
+For every alignment (.bam) file, an index (.bai) file can be generated. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly helpful since an alignment file is typically quite big (for example, our alignment files are ~10GB).
 
+Our plan was to read the index file by converting it into text format, so that we could analyze it to try and determine the optimal way to divide the data during the analysis computation.
+
+An alignment (.bam) file can be easily converted from binary to human-readable text format (.sam, which stands for Sequence Alignment Map), as viewing the sequence in a human-readble form has many uses. However, since index files are mostly used only to be able to jump to the relavant sections of the alignment file, converting an index file into a human-readable text format is not a straightforward task. We realized just how difficult a task this was once we started working on this project. We consistently kept running into roadblocks while trying to read the index file. Multiple approaches were implemented; unfortunately none of them worked out the way we had hoped.
+
+Our first approach was to understand where the samtools code was reading the index file. We tried to append the code so that it would read the index file and try to convert it to a text format. That did not work. We also tried to use an open-source library for samtools written in Java (htsjdk) so that we could read the metadata from the index files. That did not work either. Lack of domain knowledge about genomic sequening data hindered us from writing our own code to convert the index file.
+
+```Bash
+public class ReadIndexCustom {
+
+    public static void main(String[] args) throws IOException {
+        QueryInterval queryInterval = new QueryInterval(1,1,10000000);
+        File file = new File(args[0]);
+        BAMFileReader br = new BAMFileReader(null, file, false, false, null, null, null);
+        BAMIndex index = br.getIndex();
+        final BAMFileSpan fileSpan = index.getSpanOverlapping(queryInterval.referenceIndex, queryInterval.start, queryInterval.end);
+        System.out.println(fileSpan);
+
+    }
+
+}
+```
+
+
+After we realized that we really needed to move on and focus on other aspects of the project, we decided to try different techniques to balance the load and examine which technique did better.
+
+
+#### Load Balancing Simulator
 In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
