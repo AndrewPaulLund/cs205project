@@ -625,17 +625,26 @@ public class ReadIndexCustom {
 After these failed attempts to read the index file, we decided to implement a load balancing simulator.
 
 #### Load Balancing Simulator
-In order to process the heterogeneous data we
-developed a load balancing simulator. The simulator
+In order to process the heterogeneous data we developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
-and output timing files are found in the ```load_balance_simulator``` directory. It
-simulates four different sorting
+and output timing files are found in the ```load_balance_simulator``` directory. 
+
+
+
+The work balancer simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keep tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to done which can be performed in a preset duration of time.
+
+With this simulator we have written, we can then simulate the parallelization process in which each task is passed on to each parallel process. Given the runtimes of each task which we had collected from our previous parallel runs and tests, we can then use these to simulate the whole parallelization process and determine (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
+
+We can then apply different load balancing strategies to assess how these different benchmarks of the changes with different load balancing strategies. Specifically, we simulated four different load balancing
 techniques to parallelize the data across a range of cores.
 
 1. Ascending data size processing
 2. Original data order processing
 3. Random order processing
 4. Descending data size processing
+
+Briefly, in the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. In the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallization. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
+
 
 Results for these four sorting techniques are discussed in the "Results" section
 below.
@@ -646,6 +655,9 @@ To run the simulator, use a command similar to the following:
 ```Bash
 $ pypy simulateLoadBalance.py input_sample.txt > output.simulate.txt
 ```
+
+
+
 
 **4. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
 parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
@@ -711,7 +723,39 @@ technique and are pleased with the results.
 |![bin5](report_images/binning_dna_speedup.png)  |  ![bin6](report_images/binning_rna_speedup.png)|
 |![bin7](report_images/dna_binning_table.png) | ![bin8](report_images/rna_binning_table.png) |
 
-**2. OpenMP**
+
+**2. MPI**
+
+MPI results follow:
+
+Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the exceution time needed for analysis decreased for both the DNA and RNA sample in a fairly linear way. Correspondingly, the speedup of the excution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theortical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of core was however 50.3x.
+
+A even sharper devation from linearity could also be noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything.
+
+
+|Execution Time|Speedup|
+|:--:|:--:|
+|![](report_images/mpi_time.png)|![](report_images/mpi_speedup.png)
+||![](report_images/mpi_table.png)
+
+**3. Load Balancing**
+
+- discuss impact of different strategies
+- discuss differences between how DNA and RNA behaved.
+- dicuss proportion of idle time
+- discuss impact on speedup
+- discuss heterogeneity between RNA1 and RNA2. Curves look very different. 
+- emphasize how much improvement we can get from Best vs. Original and Best vs. worst case.
+
+
+|  DNA  | RNA |
+|:---:|:---:|
+|![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
+|![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
+|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
+
+
+**4. OpenMP**
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
 were parallizable in the bam_mpileup function. Module files for each OpenMP
@@ -734,23 +778,6 @@ flag on the HMSRC cluster, and due to
 its relatively slow runtime when compared to SAMtools we did not further attempt
 to parallelize BCFtools with OpenMP.
 
-**3. MPI**
-
-MPI results follow:
-
-|Execution Time|Speedup|
-|:--:|:--:|
-|![](report_images/mpi_time.png)|![](report_images/mpi_speedup.png)
-||![](report_images/mpi_table.png)
-
-**4. Load Balancing**
-
-|  DNA  | RNA |
-|:---:|:---:|
-|![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
-|![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
-|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
-
 ---
 
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
@@ -763,7 +790,19 @@ CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same techniqu
 was used to compile our OpenMP parallelization attempts.
 - OpenMP was not trivial, and unsuccessful in speeding up execution time
 
+- Java libraries and htslib libraries were hard to read through. htslib code was not very well
+commented and intuitive to understand.
+
 Use of load balancing is an advanced feature in my opinion.
+
+
+
+#### Prediction of optimal load balancing strategy using custom simulator
+
+Using the custom simulator we have designed, we can simulate and determine what is the overall runtime and
+wasted compute time given different amounts of load, number of processing cores utilized and load balancing strategies. Since it is possible for us to predict the workload at runtime based on the 'index file' reader we had set out to build, we would be able to predict the workload encountered by each bin during the parallelization. Given this information, we can then simulate different load balancing strategies top decide upon an optimal number of processing cores and load balancing strategies which will make the overall run complete more quickly and efficiently.
+
+
 
 ---
 
@@ -818,3 +857,5 @@ notebooks are all found in this repository
 
 # TODO:
 - ADD LOAD BALANCING SIMULATOR DESCRIPTION
+- idea of using load balancer to predict how to load balance and different load balancing strategies.
+- talk about the structure of the index file and what data it contains.
