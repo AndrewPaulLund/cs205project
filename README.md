@@ -248,7 +248,7 @@ what ```mpileup```'s standard output looks like.
 #### Running ```mpileup``` batch jobs
 In order to automate parallelization speedup analysis of multiple samples with different
 parameters, we used [Perl](https://www.perl.org/) and batch scripts on the HMSRC cluster.
-Sample batch files are found in the ```data/batch_scripts``` directory.
+Sample batch files are found in the ```binning_tests/batch_scripts``` directory.
 
 Here is a sample from one of the
 perl files used for the binning technique described below:
@@ -328,7 +328,7 @@ profiler. In order to get the profiler to run, we had to include both the
 SAMtools ```Makefile```.
 
 Below is a sample of our SAMtools profiler results. The
-full profiler text can be found in the ```data/profiling``` directory.
+full profiler text can be found in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -420,7 +420,7 @@ CPUPROFILE=./prof.out cat ./DNA.10mil_for_bcftools.file | ./bcftools call -O b -
 gprof ./bcftools ./gmon.out
 ```
 Below is a sample of our BCFtools profiling. The full output file can be
-viewed in the ```data/profiling``` directory.
+viewed in the ```profiling``` directory.
 
 ```bash
 Flat profile:
@@ -535,7 +535,7 @@ Results for our OpenMP tests are found in the
 **3. MPI** - FILL IN HERE!
 
 We performed the MPI runs on the Harvard Medical School cluster. As the cluster is
-a shared compute cluster used by thousand of users, we do not have root access to 
+a shared compute cluster used by thousand of users, we do not have root access to
 install the packages into the default system file paths for MPI. As such, we built
 a custom environment based on Anaconda.
 
@@ -606,6 +606,9 @@ extension=/home/kt184/cs205/mpi_examples/mpi4py-examples/results/DNA1.core2
 In the above jobscript, we requested 3 tasks to represent a single master node and 2 worker nodes. The master node would decide upon the job needed to be performed by the slave node, collect back the results of analysis by the slave nodes and compile the results.
 
 The sample python script we used for MPI4py can be found in the link "????????????????????"
+=======
+a custom environment
+
 
 
 
@@ -627,7 +630,7 @@ heterogeneity as outlined above.
 In order to process the heterogeneous data we
 developed a load balancing simulator. The simulator
 (```simulateLoadBalance.py```), batch script, sample input
-and output files are found in the ```load_balance_simulator``` directory. It
+and output timing files are found in the ```load_balance_simulator``` directory. It
 simulates four different sorting
 techniques to parallelize the data across a range of cores.
 
@@ -680,7 +683,7 @@ technique and are pleased with the results.
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
 were parallizable in the bam_mpileup function. Module files for each OpenMP
-attempt are in the ```data/open_mp_tests``` directory. The results for our
+attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
 | Function | 1 thread time (seconds) | 8 threads time (seconds)
@@ -701,7 +704,12 @@ to parallelize BCFtools with OpenMP.
 
 **3. MPI**
 
-ADD ANALYSIS HERE
+MPI results follow:
+
+|Execution Time|Speedup|
+|:--:|:--:|
+|![](report_images/mpi_time.png)|![](report_images/mpi_speedup.png)
+||![](report_images/mpi_table.png)
 
 **4. Load Balancing**
 
@@ -709,6 +717,7 @@ ADD ANALYSIS HERE
 |:---:|:---:|
 |![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
 |![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
+|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
 
 ---
 
@@ -718,7 +727,7 @@ This module can be used to simulate balancing blah blah blah.
 - We initially had a very hard timing profiling the SAMtools library. We spent more
 than two weeks attempting to run the gprof profiler, and finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
-CGLAFS and LDFLAGS sections of the assiciated ```Makefile```. This same technique
+CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
 - OpenMP was not trivial, and unsuccessful in speeding up execution time
 
