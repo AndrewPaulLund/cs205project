@@ -593,9 +593,10 @@ technique and are pleased with the results.
 
 |  DNA  | RNA |
 |:---:|:---:|
-|![bin1](report_images/binning1.png)  |  ![bin3](report_images/binning2.png)|
-|![bin2](report_images/binning3.png)  |  ![bin4](report_images/binning4.png)|
-|![bin5](report_images/binning5.png)  |  ![bin6](report_images/binning6.png)|
+|![bin1](report_images/binning_dna_bins.png)  |  ![bin3](report_images/binning_rna_bins.png)|
+|![bin2](report_images/binning_dna_time.png)  |  ![bin4](report_images/binning_rna_time.png)|
+|![bin5](report_images/binning_dna_speedup.png)  |  ![bin6](report_images/binning_rna_speedup.png)|
+|![bin7](report_images/dna_binning_table.png) | ![bin8](report_images/rna_binning_table.png) |
 
 **2. OpenMP**
 As previously noted, we focused our OpenMP parallelization on three functions
@@ -694,7 +695,7 @@ They appear in the following order:
 
 - Samtools source code is found [here](https://github.com/samtools).
 - Evaluation data, modified source code, simulation and batch scripts, and visualization
-notebooks are found in this repository
+notebooks are all found in this repository
 
 # TODO:
 - Add makefiles for gprof and OpenMP
