@@ -626,25 +626,22 @@ After these failed attempts to read the index file, we decided to implement a lo
 
 #### Load Balancing Simulator
 In order to process the heterogeneous data we developed a load balancing simulator. The simulator
-(```simulateLoadBalance.py```), batch script, sample input
-and output timing files are found in the ```load_balance_simulator``` directory. 
+(```simulateLoadBalance.py```), batch script, sample input,
+and output timing files are found in the ```load_balance_simulator``` directory.
 
+The load balancing simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keep tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available, and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to do which can be performed in a preset duration of time.
 
+Using the simulator we can simulate the parallelization process in which each task is passed on to each parallel process. Given the runtimes of each task which we had already collected from our previous parallel runs and tests, we used these to simulate the whole parallelization process and determined (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
 
-The work balancer simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keep tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to done which can be performed in a preset duration of time.
-
-With this simulator we have written, we can then simulate the parallelization process in which each task is passed on to each parallel process. Given the runtimes of each task which we had collected from our previous parallel runs and tests, we can then use these to simulate the whole parallelization process and determine (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
-
-We can then apply different load balancing strategies to assess how these different benchmarks of the changes with different load balancing strategies. Specifically, we simulated four different load balancing
-techniques to parallelize the data across a range of cores.
+We can then apply different load balancing strategies to assess how these different benchmarks change with different load balancing strategies. Specifically, we simulated four different load balancing
+techniques to parallelize the data across a range of cores:
 
 1. Ascending data size processing
 2. Original data order processing
 3. Random order processing
 4. Descending data size processing
 
-Briefly, in the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. In the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallization. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
-
+Briefly, in the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. In the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
 
 Results for these four sorting techniques are discussed in the "Results" section
 below.
@@ -690,9 +687,13 @@ Results for our OpenMP tests are found in the
 ---
 
 ### Results
+Results for each of the previously described speedup techniques are analyzed and
+critiqued below:
+
 **1. Binning**
+
 We tried to shard the data into "small" bins in order to allow parallel execution
-amongst cores. Thus, having more bins allows more parallelization, and thus a greater
+amongst cores. Thus, having more bins allows more parallelization and a greater
 speedup. However, it can be foreseen that if there are too many bins, there will be larger overheads due to splitting the data, core execution and communication, leading to a potential increase in overall runtime. There is thus a need to find the optimal bin size
 in which the overall runtime can be reduced by parallelization while minimizing the overheads from having too many bins.
 
@@ -708,14 +709,17 @@ total number of bins for a sample which reduces the benefit of parallelization.
 
 With a bin size of 1 million, we would like to note that one chromosome will be
 limited to ~250 bins, thus allowing us in principle to use up to ~250 parallel
-processes for SNP analysis.
+processes for SNP analysis. We used one chromosome from each sample for the majority of our project's analyses.
 
 |  DNA  | RNA |
 |:---:|:---:|
 |![bin1](report_images/binning_dna_bins.png)  |  ![bin3](report_images/binning_rna_bins.png)|
 
-As seen in the time and speedup plots, we see excellent speedup for our binning
-technique and are pleased with the results.
+As seen in the time and speedup plots and table, we see excellent speedup for our binning
+technique and are pleased with the results. All results show a nearly linear speedup
+compared to the dashed linear line. It is interesting to note that RNA 1 exceeded linear
+speedup, and we think this is perhaps due to the single core (our serial benchmark) being
+too fast. This could be mitigated by running more tests and averaging them.
 
 |  DNA  | RNA |
 |:---:|:---:|
@@ -726,11 +730,12 @@ technique and are pleased with the results.
 
 **2. MPI**
 
-MPI results follow:
+Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the execution time needed for analysis decreased for both the DNA and RNA samples linearly. Correspondingly, the speedup of the execution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theoretical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of core was however 50.3x. Given the amount of time
+dedicated to simply getting MPI to work on the HMSRC cluster, we would have liked to perform multiple
+tests to see an average execution time and speedup for each sample, but were limited in time.
 
-Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the exceution time needed for analysis decreased for both the DNA and RNA sample in a fairly linear way. Correspondingly, the speedup of the excution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theortical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of core was however 50.3x.
-
-A even sharper devation from linearity could also be noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything.
+A even sharper deviation from linearity is noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything. Executing MPI on a larger dataset with more bins would be an excellent extension of these
+tests, and we would hope to see similar linear speedup.
 
 
 |Execution Time|Speedup|
@@ -740,11 +745,14 @@ A even sharper devation from linearity could also be noted at 128 cores, with bo
 
 **3. Load Balancing**
 
+Our load balancing simulation results are shown below. As suspected, the ascending order
+sorting strategy resulted in the least amount of CPU idle time
+
 - discuss impact of different strategies
 - discuss differences between how DNA and RNA behaved.
 - dicuss proportion of idle time
 - discuss impact on speedup
-- discuss heterogeneity between RNA1 and RNA2. Curves look very different. 
+- discuss heterogeneity between RNA1 and RNA2. Curves look very different.
 - emphasize how much improvement we can get from Best vs. Original and Best vs. worst case.
 
 
