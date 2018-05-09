@@ -833,18 +833,16 @@ Using the custom load balancing simulator we designed, we can simulate and deter
 
 ---
 
-###
-
-(Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…)
-#### Goals Achieved:
+### Goals Achieved:
 We tried four different strategies to parallelize a very complex code base. We were successful with both binning and MPI, semi-successful with load balancing, and unsuccessful with OpenMP. We learned a lot from each
-method.
+method, and were excited to work on a project with potentially huge real-world impact.
 
 We are very happy with the speedup we achieved through binning, MPI, and simulated load balancing.
-- Discuss trying to read the index file with JAVA, etc.
-- We would have liked to include Spark. ADD COMMENTARY HERE
 
 ---
+
+### Improvements Suggestions, Lessons Learned, Future Work, and Interesting Insights
+
 
 ### Infrastructure
 <img src="report_images/hms.png" width=100>
