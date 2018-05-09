@@ -725,11 +725,11 @@ too fast. This could be mitigated by running more tests and averaging them.
 
 **2. MPI**
 
-Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the execution time needed for analysis decreased for both the DNA and RNA samples linearly. Correspondingly, the speedup of the execution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theoretical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of core was however 50.3x. Given the amount of time
+Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the execution time needed for analysis decreased for both the DNA and RNA samples linearly. Correspondingly, the speedup of the execution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theoretical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of cores however was 50.3x. Given the amount of time
 dedicated to simply getting MPI to work on the HMSRC cluster, we would have liked to perform multiple
 tests to see an average execution time and speedup for each sample, but were limited in time.
 
-A even sharper deviation from linearity is noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything. Executing MPI on a larger dataset with more bins would be an excellent extension of these
+An even sharper deviation from linearity is noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything. Executing MPI on a larger dataset with more bins would be an excellent extension of these
 tests, and we would hope to see similar linear speedup.
 
 
@@ -753,9 +753,9 @@ In general the descending sorting performs better than the original order of the
 alignment data, supporting our hypothesis that completing larger, thus longer, jobs
 first is a better method than sequentially analyzing the alignment files.
 
-We focused CPU idle time as a performance metric since this can have an impact on the
+We focused on CPU idle time as a performance metric since this can have an impact on the
 bottom-line of a company or team performing analysis of large datasets like the GenomeAsia100K
-project. Having CPUs idle is both wasted time and money, and thus if they apply a strategy
+project. Having CPUs sit idle results in both wasted time and money, and thus if they apply a strategy
 like our descending sorting, they could see significant benefits.
 
 There is a noticeable sample-level difference between RNA 1 and 2 speedups. This difference
@@ -783,7 +783,7 @@ plots.
 **4. OpenMP**
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
-were parallizable in the bam_mpileup function. Module files for each OpenMP
+were parallelizable in the bam_mpileup function. Module files for each OpenMP
 attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
@@ -806,15 +806,15 @@ to parallelize BCFtools with OpenMP.
 ---
 
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
-- Our primary advanced features we developed is the load balancing simulation.
+- The primary advanced feature we developed is the load balancing simulation.
 This module can be used to simulate balancing blah blah blah.
 
-As the SAMtools library was a really big package with many depending C formatted files, requiring prior configuration, generation of a make file and the final compilation of the package, we were unfamiliar with how how to include the profiling packages towards these complex packages. As such, we initially had a very hard timing profiling the SAMtools library and we spent more than two weeks attempting to run the gprof profiler, and finally had a
+As the SAMtools library was a really big package with many depending C formatted files, requiring prior configuration, generation of a make file and the final compilation of the package, we were unfamiliar with how to include the profiling packages towards these complex packages. As such, we initially had a very hard timing profiling the SAMtools library and we spent more than two weeks attempting to run the gprof profiler, and finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
 CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
 
-Here, we also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to paralleize the program using OpenMP was largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvment in the execution time despite a number of attempts and considerable efforts that we have made. From the analysis of the code, we note that the heavy component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is really difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to work here.
+Here, we also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to parallelize the program using OpenMP was largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvment in the execution time despite a number of attempts and considerable efforts that we have made. From the analysis of the code, we note that the heavy component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is really difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to work here.
 
 As such, it seems that Samtools mpileup is a program that is not easy to directly parallelize. Indeed, based on a discussion on the github repository of the original package, we note that attempts by others have been made to parallelize the code for the mpileup program. However, others have faced similar difficulties as we have. Specifically, we quote: "We did some profiling, but the algorithm is complex and rather hard to multi-thread in the current state" (https://github.com/samtools/samtools/issues/480). Thus, we regard the difficulty we faced in applying OpenMP and in parallelizing the program as a fundamental intrinsic issue caused by the algorithm utilized by Samtools mpileup.
 
