@@ -4,6 +4,11 @@
 
 Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
 
+##### Table of Contents  
+[Headers](#headers)  
+[Emphasis](#emphasis)  
+
+
 ---
 ### Introduction
 
