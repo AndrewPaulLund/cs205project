@@ -636,12 +636,12 @@ Using the simulator we can simulate the parallelization process in which each ta
 We can then apply different load balancing strategies to assess how these different benchmarks change with different load balancing strategies. Specifically, we simulated four different load balancing
 techniques to parallelize the data across a range of cores:
 
-1. Ascending data size processing
+1. Descending data size processing
 2. Original data order processing
 3. Random order processing
-4. Descending data size processing
+4. Ascending data size processing
 
-Briefly, in the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. In the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
+Briefly, in the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. In the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
 
 Results for these four sorting techniques are discussed in the "Results" section
 below.
@@ -652,9 +652,6 @@ To run the simulator, use a command similar to the following:
 ```Bash
 $ pypy simulateLoadBalance.py input_sample.txt > output.simulate.txt
 ```
-
-
-
 
 **4. OpenMP** - Based on the profiling outlined above, we focused our OpenMP
 parallelization on the mpileup, bam_mpileup, pileup_seq functions. All three of
@@ -745,22 +742,44 @@ tests, and we would hope to see similar linear speedup.
 
 **3. Load Balancing**
 
-Our load balancing simulation results are shown below. As suspected, the ascending order
-sorting strategy resulted in the least amount of CPU idle time
+Our load balancing simulation results are shown below. As suspected, the descending order
+sorting strategy, in general, resulted in the least amount of CPU idle time. This is followed
+by the original, random, and ascending orders. This result trend follows to the speedup plots
+where we see descending performing the best in general. The reason the descending sorting
+performs best is most likely due to the heavier jobs being done concurrently at the beginning
+allowing the small tasks to be fit evenly across processes towards the end of the analysis. The
+opposite is true for the ascending sort, leaving longer jobs toward the end that can result
+in a single processor delaying the execution time for the whole analysis execution.
 
-- discuss impact of different strategies
-- discuss differences between how DNA and RNA behaved.
-- dicuss proportion of idle time
-- discuss impact on speedup
-- discuss heterogeneity between RNA1 and RNA2. Curves look very different.
-- emphasize how much improvement we can get from Best vs. Original and Best vs. worst case.
+In general the descending sorting performs better than the original order of the
+alignment data, supporting our hypothesis that completing larger, thus longer, jobs
+first is a better method than sequentially analyzing the alignment files.
 
+We focused CPU idle time as a performance metric since this can have an impact on the
+bottom-line of a company or team performing analysis of large datasets like the GenomeAsia100K
+project. Having CPUs idle is both wasted time and money, and thus if they apply a strategy
+like our descending sorting, they could see significant benefits.
+
+There is a noticeable sample-level difference between RNA 1 and 2 speedups. This difference
+highlights the need for sample-specific analysis, and supports our recommendation of
+employing a simulator like ours to determine the best type of architecture to employ before
+beginning long-duration (weeks/months) analysis.
 
 |  DNA  | RNA |
 |:---:|:---:|
 |![sim1](report_images/dna_sim_idle.png)  |  ![](report_images/rna_sim_idle.png)|
 |![sim2](report_images/dna_sim_speedup.png)  |  ![](report_images/rna_sim_speedup.png)|
-|![](report_images/dna_sim_table.png)|![](report_images/rna_sim_table.png)
+
+The following tables illustrate the speedup potential of the descending sorting
+method over both the original and ascending methods, with up to 15% speedup in
+the RNA SNP analysis. We believe the better results seen for RNA are due to its
+typically more heterogeneous makeup as illustrated above in the "Data Heterogeneity"
+plots.
+
+**DNA Load Balancing Speedup**
+![](report_images/dna_sim_table.png)
+**RNA Load Balancing Speedup**
+![](report_images/rna_sim_table.png)
 
 
 **4. OpenMP**
