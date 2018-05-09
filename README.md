@@ -37,7 +37,7 @@ Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
   - [Challenge: OpenMP](#challenge-openmp)
   - [Challenge: Index File Reading](#challenge-index-file-reading)
   - [Advanced Feature: Load Balancing Simulator](#advanced-feature-load-balancing-simulator)
-- [Goals Achieved:](#goals-achieved)
+- [Goals Achieved](#goals-achieved)
 - [Lessons Learned and Future Work](#lessons-learned-and-future-work)
   - [Lessons Learned](#lessons-learned)
   - [Future Work](#future-work)
@@ -904,7 +904,7 @@ Using the custom load balancing simulator we designed, we can simulate and deter
 
 ---
 
-### Goals Achieved:
+### Goals Achieved
 We tried four different strategies to parallelize a very complex code base. We were successful with both binning and MPI, semi-successful with load balancing, and unsuccessful with OpenMP. We learned a lot from each
 method, and were excited to work on a project with potentially huge real-world impact.
 
