@@ -141,8 +141,7 @@ RNA2: https://www.ebi.ac.uk/arrayexpress/files/E-GEUV-1/HG00117.1.M_111124_2.bam
 
 Index files can be generated using ```$ samtools index sample.bam```
 
-Details about the infrastructure we used are in the "Infrastructure" section
-toward the bottom of this report.
+Details about the infrastructure we used are in the "Infrastructure" section.
 
 ---
 
@@ -159,6 +158,33 @@ both DNA and RNA of Sample 1 below:
 |![RNA1](report_images/RNA_Distribution.png)  |  ![RNA2](report_images/RNA_Heterogeneity.png)|
 
 ---
+
+### Infrastructure
+<img src="report_images/hms.png" width=100>
+
+Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) (HMSRC) cluster for all testing and analysis.
+
+**HMSRC description:**
+- 8,000 cores
+  - 32 or 28 cores per node
+    - Nodes support up to 32 cores, but are capped at 20
+    - A known problem in parallelization of related genomic algorithms
+  - 256 GB RAM per node (8-9 GB/core)
+- 24 GPUs (8 M40 / 16 K80) - Not utilized for this project
+- Login/load balancer 5 VM (8 cores/16 GB memory)
+- InfiniBandconnectivity between nodes
+- CentOS 7
+- SLURM batch system
+- Supports OpenMP, MPI
+- Currently does not support Spark (we initially intended on using Spark for
+  load balancing implementation)
+
+**HMSRC Cluster Architecture:**
+
+<img src="report_images/cluster.png" width=500>
+
+---
+
 
 ### Installing, Running, & Profiling SAMtools
 
@@ -841,32 +867,21 @@ We are very happy with the speedup we achieved through binning, MPI, and simulat
 
 ---
 
-### Improvements Suggestions, Lessons Learned, Future Work, and Interesting Insights
+### Lessons Learned and Future Work
 
 
-### Infrastructure
-<img src="report_images/hms.png" width=100>
+####Lessons Learned
 
-Our team used the [Harvard Medical School Research Computing](https://rc.hms.harvard.edu/) (HMSRC) cluster for all testing and analysis.
+We found that the Samtools package is a large and complex code base which certainly takes much time and expert expertise to fully comprehend. As such, this project that we had defined to parallelize the samtools package is certainly a significant endeavour and perhaps much more than what is typically achievable for a class project. That said, the Samtools package is a very widely utilized package, having received more than 15,000+ citations (https://www.ncbi.nlm.nih.gov/pubmed/19505943). Indeed, we certainly believe that our efforts here to parallelize the package would bring significant general benefits to the community.
 
-**HMSRC description:**
-- 8,000 cores
-  - 32 or 28 cores per node
-    - Nodes support up to 32 cores, but are capped at 20
-    - A known problem in parallelization of related genomic algorithms
-  - 256 GB RAM per node (8-9 GB/core)
-- 24 GPUs (8 M40 / 16 K80) - Not utilized for this project
-- Login/load balancer 5 VM (8 cores/16 GB memory)
-- InfiniBandconnectivity between nodes
-- CentOS 7
-- SLURM batch system
-- Supports OpenMP, MPI
-- Currently does not support Spark (we initially intended on using Spark for
-  load balancing implementation)
 
-**HMSRC Cluster Architecture:**
+####Future Work
 
-<img src="report_images/cluster.png" width=500>
+Having implement these parallization strategies on the samtools package, we intend to apply it to a large dataset. In particular, the methodologies and optimization strategies we outlined here would be applied towards the future analysis of a ~400TB dataset on a supercomputer.
+
+Though we have difficulties in establishing the reading of the index file structure here in this project, we plan to continue this effort. With this, it should enable us to achieve better and more efficient paralllelization and load balancing.
+
+
 
 ---
 
