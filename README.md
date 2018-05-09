@@ -22,7 +22,7 @@ the genome. The below image illustrates SNPs between three individuals.
 
 ![SNP](report_images/snp.png)
 
-**What are the uses of genomic sequencing?**
+**What is genomic sequencing important?**
 
 Genomic sequencing has many applications in today's world. Some of them are as follows:
 - Very important for extremely rare disorders
@@ -46,7 +46,7 @@ took almost 15 years. Today, it can be done for as low as $1,000 and takes as li
 one week!
 
 The primary overhead for genomic sequencing is now computation. The
-algorithms used are not easily parallelized, and do not scale linearly.
+algorithms used are not easily parallelizable, and do not scale linearly.
 
 <img src="report_images/cost.png" width=500>
 
@@ -54,29 +54,28 @@ algorithms used are not easily parallelized, and do not scale linearly.
 
 ### Need for parallelization in computational analysis of genomic data
 
-Given the huge amount of genomic data being produced today and the huge number
-of individuals being sequenced. For example, both [GenomeAsia100K](http://www.genomeasia100k.com/) and the UK's [National Health
+Today, an ever-increasing number of individuals are getting their genome sequenced, and the amount of genomic data being produced is humongous. For example, both [GenomeAsia100K](http://www.genomeasia100k.com/) and the UK's [National Health
 Service](http://www.sciencemag.org/news/2012/12/uk-unveils-plan-sequence-whole-genomes-100000-patients) are trying to sequence 100,000 individual genomes for
 medical and population studies. For a single individual the genomic data is
-approximately 100-200 GB. The total size of both these project is in the range
-of 1-2 PB and is too large to practically manage on a single machine.
+approximately 100 to 200 GB. The total size of both these project is in the range
+of 1-2 PB and is simply too large to practically manage on a single machine.
 
 Analysis of a single individual's genome can take up to [~10 days](https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/deploying-gatk-best-practices-paper.pdf) on a single threaded process. To analyze 100,000
 such samples, it would take 24,000,000 core hours of computing power, or 2700
 years on a single core. This is obviously impractical to run on a single core,
 hence the need for parallelization.
 
-In clinical applications, this long analysis is too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
+In clinical applications, this long analysis is just too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
 days to 1-2 hours, which in a clinical setting could result in a life saved versus lost.
 
-Given the shear size of the data and computing power required for analysis, we
+Given the sheer size of the data and computing power required for analysis, we
 describe our project as both "Big Data" and "Big Compute."
 
 ---
 
 ### Need for "efficient" parallelization
 
-Parallelization can result in speedup of analysis, but is often in a non-linear
+Parallelization can result in a speedup of analysis, but often in a non-linear
 manner. For example, we may be able to use 10 cores to achieve a 5x speedup. That is why we need to focus on "efficient" parallelization in order to try and achieve a linear speedup and reduce both time and cost. To that end:
 
 1. If the analyses could be completed in-house or on an institutional high-performance computing infrastructure, where the number of nodes is limited and current analysis can take 2-3 months, a more linear speedup of ~20% could result in a time savings of ~2 weeks.
@@ -148,7 +147,7 @@ toward the bottom of this report.
 ---
 
 #### Data Heterogeneity
-A key attribute of the data, and all genomic alignment files is that it is
+A key attribute of the data, and all genomic alignment files in general, is that it is
 extremely heterogeneous. Each chunk of data can have orders of magnitude different
 number of reads (genome sequence strings). This makes sequentially processing
 the alignment files very uneven. This unpredictable sizing is illustrated well for
@@ -165,7 +164,7 @@ both DNA and RNA of Sample 1 below:
 
 #### Installing the SAMtools analysis suite
 SAMtools is already available on the HMSRC cluster. In order to download,
-install, and run  a  local version for us to modify on the HMSRC login node, we
+install, and run a local version for us to modify on the HMSRC login node, we
 performed the following steps:
 
 ```Bash
@@ -198,7 +197,7 @@ $ make
 $ make install
 ```
 
-All program suit makefiles use the ```-O2``` optimization flag by default.
+All program suite makefiles use the ```-O2``` optimization flag by default.
 We did not update this flag throughout the project.
 
 #### SAMtools & BCFtools Dataflow
@@ -510,7 +509,7 @@ binning from the single-node limited 20 to a theoretical maximum of 640. We only
 went up to 128, but future research will include further expansion and analysis.
 
 We performed the MPI analysis on the Harvard Medical School cluster. As the cluster is
-a shared compute cluster used by thousand of users, we do not have root access to
+a shared compute cluster used by thousands of users, we did not have root access to
 install the packages into the default system file paths for MPI. As such, we built
 a custom environment based on Anaconda.
 
@@ -593,7 +592,7 @@ in idle CPU time as the number of parallel processes increase. By sorting, or "l
 balancing" the data as it is distributed amongst parallel processes, we hope to reduce
 the proportion of CPU idle time and wasted processing power.
 
-Every genome alignment (.bam) file has an accompanying index (.bai) file. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly efficient since an alignment file is typically quite large (for example, our alignment files are ~10GB).
+Every genome alignment (.bam) file has an accompanying index (.bai) file. This index file does not contain any genomic sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly efficient since an alignment file is typically quite large (for example, our alignment files are ~10GB).
 
 Thus, in principle, by studying the structure of the index file, we should be able
 to smartly and quickly identify the distribution of the heterogeneous data, sort it by chunk size size (smartly binning), distribute the work evenly among processes,
@@ -628,9 +627,9 @@ In order to process the heterogeneous data we developed a load balancing simulat
 (```simulateLoadBalance.py```), batch script, sample input,
 and output timing files are found in the ```load_balance_simulator``` directory.
 
-The load balancing simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keep tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available, and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to do which can be performed in a preset duration of time.
+The load balancing simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keeps tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available, and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to do which can be performed in a preset duration of time.
 
-Using the simulator we can simulate the parallelization process in which each task is passed on to each parallel process. Given the runtimes of each task which we had already collected from our previous parallel runs and tests, we used these to simulate the whole parallelization process and determined (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
+Using the simulator we can simulate the parallelization process in which each task is passed on to each parallel process. We used the runtimes of each task which we had already collected from our previous parallel runs and tests to simulate the whole parallelization process and determined (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
 
 We can then apply different load balancing strategies to assess how these different benchmarks change with different load balancing strategies. Specifically, we simulated four different load balancing
 techniques to parallelize the data across a range of cores:
@@ -640,7 +639,7 @@ techniques to parallelize the data across a range of cores:
 3. Random order processing
 4. Ascending data size processing
 
-Briefly, in the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. In the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
+Briefly, in the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. In the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. The 'original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
 
 Results for these four sorting techniques are discussed in the "Results" section
 below.
@@ -726,11 +725,11 @@ too fast. This could be mitigated by running more tests and averaging them.
 
 **2. MPI**
 
-Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the execution time needed for analysis decreased for both the DNA and RNA samples linearly. Correspondingly, the speedup of the execution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theoretical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of core was however 50.3x. Given the amount of time
+Based on the plot below, we can see that in general, as the number of cores increased from 1 to 128, the execution time needed for analysis decreased for both the DNA and RNA samples linearly. Correspondingly, the speedup of the execution as the number of cores increased is also fairly linear, with the RNA sample following closer to the theoretical linear speedup line and with the DNA sample showing slightly more deviation from the theoretical linear speedup. In particular, at 64 cores, we see that the speed up for the DNA sample was only 40.7x which is lower than the theoretical maximum possible speedup of 64x. The speedup for the RNA sample for the same number of cores however was 50.3x. Given the amount of time
 dedicated to simply getting MPI to work on the HMSRC cluster, we would have liked to perform multiple
 tests to see an average execution time and speedup for each sample, but were limited in time.
 
-A even sharper deviation from linearity is noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything. Executing MPI on a larger dataset with more bins would be an excellent extension of these
+An even sharper deviation from linearity is noted at 128 cores, with both the DNA and RNA samples showing only 56.2x and 55.5x speedup relative to the theoretical possible amount of 128x. This is possibly because the data was only split into ~250 bins. Some of the predefined bins may contain no data and thus most of the CPU processes that were allocated to these empty bins were thus just idling and not doing anything. Executing MPI on a larger dataset with more bins would be an excellent extension of these
 tests, and we would hope to see similar linear speedup.
 
 
@@ -754,9 +753,9 @@ In general the descending sorting performs better than the original order of the
 alignment data, supporting our hypothesis that completing larger, thus longer, jobs
 first is a better method than sequentially analyzing the alignment files.
 
-We focused CPU idle time as a performance metric since this can have an impact on the
+We focused on CPU idle time as a performance metric since this can have an impact on the
 bottom-line of a company or team performing analysis of large datasets like the GenomeAsia100K
-project. Having CPUs idle is both wasted time and money, and thus if they apply a strategy
+project. Having CPUs sit idle results in both wasted time and money, and thus if they apply a strategy
 like our descending sorting, they could see significant benefits.
 
 There is a noticeable sample-level difference between RNA 1 and 2 speedups. This difference
@@ -784,7 +783,7 @@ plots.
 As previously noted, we focused our OpenMP parallelization on three functions
 within the ```bam_plcmd.c``` module of SAMtools: ```mpileup```, ```bam_mpileup```,
 and ```pileup_seq```. There were no for loops that
-were parallizable in the ```bam_mpileup function```. Module files for each OpenMP
+were parallelizable in the ```bam_mpileup function```. Module files for each OpenMP
 attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
@@ -817,7 +816,7 @@ was used to compile our OpenMP parallelization attempts.
 
 #### Challenge: OpenMP
 
-We also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to parallelize the program using OpenMP were largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvement in the execution time despite a number of attempts and considerable efforts that we have made. We are please, however, that we were able to incorporate and compile such a large codebase with OpenMP. From the analysis of the code, we note that the heaviest component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is quite difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to be fruitful here.
+We also attempted to utilize OpenMP to parallelize the ```mpileup``` program. However, we note that our attempts to parallelize the program using OpenMP were largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvement in the execution time despite a number of attempts and considerable efforts that we have made. We are please, however, that we were able to incorporate and compile such a large codebase with OpenMP. From the analysis of the code, we note that the heaviest component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is quite difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to be fruitful here.
 
 As such, it seems that Samtools ```mpileup``` is a program that is not easy to directly parallelize. Indeed, based on a discussion on the GitHub repository of the original package, we note that attempts by others have been made to parallelize the code for the ```mpileup``` program. However, others have faced similar difficulties as we have. Specifically, we quote: "We did some profiling, but the algorithm is complex and rather hard to multi-thread in the current state" (https://github.com/samtools/samtools/issues/480). Thus, we regard the difficulty we faced in applying OpenMP and in parallelizing the program as a fundamental intrinsic issue caused by the algorithm utilized by Samtools ```mpileup```, and were happy to commiserate with others
 attempting our same parallelization.
