@@ -791,12 +791,16 @@ to parallelize BCFtools with OpenMP.
 ### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
 - Our primary advanced features we developed is the load balancing simulation.
 This module can be used to simulate balancing blah blah blah.
-- We initially had a very hard timing profiling the SAMtools library. We spent more
-than two weeks attempting to run the gprof profiler, and finally had a
+
+As the SAMtools library was a really big package with many depending C formatted files, requiring prior configuration, generation of a make file and the final compilation of the package, we were unfamiliar with how how to include the profiling packages towards these complex packages. As such, we initially had a very hard timing profiling the SAMtools library and we spent more than two weeks attempting to run the gprof profiler, and finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
 CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
-- OpenMP was not trivial, and unsuccessful in speeding up execution time
+
+Here, we also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to paralleize the program using OpenMP was largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvment in the execution time despite a number of attempts and considerable efforts that we have made. From the analysis of the code, we note that the heavy component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is really difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to work here.
+
+As such, it seems that Samtools mpileup is a program that is not easy to directly parallelize. Indeed, based on a discussion on the github repository of the original package, we note that attempts by others have been made to parallelize the code for the mpileup program. However, others have faced similar difficulties as we have. Specifically, we quote: "We did some profiling, but the algorithm is complex and rather hard to multi-thread in the current state" (https://github.com/samtools/samtools/issues/480). Thus, we regard the difficulty we faced in applying OpenMP and in parallelizing the program as a fundamental intrinsic issue caused by the algorithm utilized by Samtools mpileup.
+
 
 - Java libraries and htslib libraries were hard to read through. htslib code was not very well
 commented and intuitive to understand.
