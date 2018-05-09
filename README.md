@@ -780,11 +780,11 @@ plots.
 **RNA Load Balancing Speedup**
 ![](report_images/rna_sim_table.png)
 
-
 **4. OpenMP**
 As previously noted, we focused our OpenMP parallelization on three functions
-within the ```bam_plcmd.c``` module of SAMtools. There were no for loops that
-were parallizable in the bam_mpileup function. Module files for each OpenMP
+within the ```bam_plcmd.c``` module of SAMtools: ```mpileup```, ```bam_mpileup```,
+and ```pileup_seq```. There were no for loops that
+were parallizable in the ```bam_mpileup function```. Module files for each OpenMP
 attempt are in the ```open_mp_tests``` directory. The results for our
 10 million read sample follow:
 
@@ -806,40 +806,42 @@ to parallelize BCFtools with OpenMP.
 
 ---
 
-### Description of advanced features like models/platforms not explained in class, advanced functions of modules, techniques to mitigate overheads, challenging parallelization or implementation aspects...
-- Our primary advanced features we developed is the load balancing simulation.
-This module can be used to simulate balancing blah blah blah.
+### Challenges & Advanced Features
 
-As the SAMtools library was a really big package with many depending C formatted files, requiring prior configuration, generation of a make file and the final compilation of the package, we were unfamiliar with how how to include the profiling packages towards these complex packages. As such, we initially had a very hard timing profiling the SAMtools library and we spent more than two weeks attempting to run the gprof profiler, and finally had a
+#### Challenge: Profiling
+
+As the SAMtools library was a really big package (~100,000 lines of code) with many interdependencies requiring prior configuration, generation of a make file, and the final compilation of the package, we were initially unfamiliar with how to include the profiling packages towards these complex packages. As such, we had a very hard timing profiling the SAMtools library and we spent more than two weeks attempting to run the ```gprof``` profiler. We finally had a
 breakthrough when we learned we needed to include the ```-pg``` flag in both the
 CGLAFS and LDFLAGS sections of the associated ```Makefile```. This same technique
 was used to compile our OpenMP parallelization attempts.
 
-Here, we also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to paralleize the program using OpenMP was largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvment in the execution time despite a number of attempts and considerable efforts that we have made. From the analysis of the code, we note that the heavy component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is really difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to work here.
+#### Challenge: OpenMP
 
-As such, it seems that Samtools mpileup is a program that is not easy to directly parallelize. Indeed, based on a discussion on the github repository of the original package, we note that attempts by others have been made to parallelize the code for the mpileup program. However, others have faced similar difficulties as we have. Specifically, we quote: "We did some profiling, but the algorithm is complex and rather hard to multi-thread in the current state" (https://github.com/samtools/samtools/issues/480). Thus, we regard the difficulty we faced in applying OpenMP and in parallelizing the program as a fundamental intrinsic issue caused by the algorithm utilized by Samtools mpileup.
+We also attempted to utilize OpenMP to parallize the mpileup program. However, we note that our attempts to parallelize the program using OpenMP were largely unsuccessful, with the use of pragmas within the program found to lead to no significant improvement in the execution time despite a number of attempts and considerable efforts that we have made. We are please, however, that we were able to incorporate and compile such a large codebase with OpenMP. From the analysis of the code, we note that the heaviest component of the code was largely in the reading of the input file and in generation of the output which is then written out to standard output. Since it is quite difficult to parallelize the writing of the results into standard output, the use of OpenMP is unlikely to be fruitful here.
 
+As such, it seems that Samtools ```mpileup``` is a program that is not easy to directly parallelize. Indeed, based on a discussion on the GitHub repository of the original package, we note that attempts by others have been made to parallelize the code for the ```mpileup``` program. However, others have faced similar difficulties as we have. Specifically, we quote: "We did some profiling, but the algorithm is complex and rather hard to multi-thread in the current state" (https://github.com/samtools/samtools/issues/480). Thus, we regard the difficulty we faced in applying OpenMP and in parallelizing the program as a fundamental intrinsic issue caused by the algorithm utilized by Samtools ```mpileup```, and were happy to commiserate with others
+attempting our same parallelization.
 
-- Java libraries and htslib libraries were hard to read through. htslib code was not very well
-commented and intuitive to understand.
+#### Challenge: Index File Reading
 
-Use of load balancing is an advanced feature in my opinion.
+As previously noted, attempting to read the binary index file (.bai) was extremely challenging, and led to
+the development of our load balancing simulator. The Java and htslib libraries were hard to read through, not very well commented or intuitive to understand. The silver-lining is that we developed a novel load
+balancing simulator that can be used to analyze alignment files.
 
+#### Advanced Feature: Load Balancing Simulator
 
-
-#### Prediction of optimal load balancing strategy using custom simulator
-
-Using the custom simulator we have designed, we can simulate and determine what is the overall runtime and
-wasted compute time given different amounts of load, number of processing cores utilized and load balancing strategies. Since it is possible for us to predict the workload at runtime based on the 'index file' reader we had set out to build, we would be able to predict the workload encountered by each bin during the parallelization. Given this information, we can then simulate different load balancing strategies top decide upon an optimal number of processing cores and load balancing strategies which will make the overall run complete more quickly and efficiently.
-
-
+Using the custom load balancing simulator we designed, we can simulate and determine what is the overall runtime and wasted compute time of an alignment file. We can tune different amounts of load, number of processing cores utilized, and load balancing strategies. Since it is possible for us to predict the workload at runtime based on the 'index file' reader we had set out to build, we would be able to predict the workload encountered by each bin during the parallelization. Given this information, we can then simulate different load balancing strategies to decide upon an optimal number of processing cores and load balancing strategies which will make the overall run complete more quickly and efficiently.
 
 ---
 
-### Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…
+###
 
-We are very happy with the speedup we achieved through binning and simulated load balancing. After determining
-the optimal bin size of 1 million
+(Discussion about goals achieved, improvements suggested, lessons learnt, future work, interesting insights…)
+#### Goals Achieved:
+We tried four different strategies to parallelize a very complex code base. We were successful with both binning and MPI, semi-successful with load balancing, and unsuccessful with OpenMP. We learned a lot from each
+method.
+
+We are very happy with the speedup we achieved through binning, MPI, and simulated load balancing.
 - Discuss trying to read the index file with JAVA, etc.
 - We would have liked to include Spark. ADD COMMENTARY HERE
 
