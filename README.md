@@ -11,9 +11,9 @@ Team Members: Andrew Lund, Divyam Misra, Nripsuta Saxena, Kar-Tong Tan
 
 [Genomic sequencing](https://en.wikipedia.org/wiki/DNA_sequencing) is the process
 of determining the order of nucleotides in an individual. A human genome has
-3 billion nucleotides in the form of four letters (As, Cs, Gs, and Ts).
+3 billion nucleotides in the form of four letters (A, C, G, and T).
 
-One of the principal application of genomic sequencing analysis is identifying single
+One of the principal applications of genomic sequencing analysis is identifying single
 nucleotide polymorphisms (SNP).
 
 [SNPs](https://en.wikipedia.org/wiki/Single-nucleotide_polymorphism) are
@@ -24,27 +24,26 @@ the genome. The below image illustrates SNPs between three individuals.
 
 **What are the uses of genomic sequencing?**
 
-Genomic sequencing has many uses in today's world. Some are as follows:
-- Quicker diagnosis of mysterious diseases
-- Finding patients with the same disease
+Genomic sequencing has many applications in today's world. Some of them are as follows:
 - Very important for extremely rare disorders
+- Quicker diagnosis of mysterious diseases
+- Finding other patients with the same disease
 - Testing for hereditary disorders
 - In utero and carrier testing
 - Predictive (presymptomatic) testing
-- Faster pharmacogenetic testing
-- Testing how someone will respond to a certain medication
+- Faster pharmacogenetic (drug-gene) testing (i.e. testing how someone will respond to a certain medication)
 - Used for certain kinds of cancers
 
 **Explosion of cheap data outweighs compute infrastructure**
 
 Today, genomic data is being generated at a much faster and efficient rate than the
-compute infrastructure that supports its analysis. As evidenced in the following
+compute infrastructure that supports its analysis can keep up with. As evidenced in the following
 plot from the [National Human Genome Research Institute](https://www.genome.gov/), the cost of genomic sequencing as dramatically decreased in the last decade.
 
-As seen above, around 2008 the cost of sequencing has significantly decreased.
-Sequencing the first genome is thought to have cost more than $2.7 billion and
-took almost 15 years. Today, it can be as low at $1,000 and take as little as
-one week.
+As seen below, the cost of genomic sequencing has significantly decreased since the year 2008.
+Sequencing the first genome is thought to have cost more than $2.7 billion by some estimates, and
+took almost 15 years. Today, it can be done for as low as $1,000 and takes as little as
+one week!
 
 The primary overhead for genomic sequencing is now computation. The
 algorithms used are not easily parallelized, and do not scale linearly.
