@@ -147,7 +147,7 @@ toward the bottom of this report.
 ---
 
 #### Data Heterogeneity
-A key attribute of the data, and all genomic alignment files is that it is
+A key attribute of the data, and all genomic alignment files in general, is that it is
 extremely heterogeneous. Each chunk of data can have orders of magnitude different
 number of reads (genome sequence strings). This makes sequentially processing
 the alignment files very uneven. This unpredictable sizing is illustrated well for
@@ -164,7 +164,7 @@ both DNA and RNA of Sample 1 below:
 
 #### Installing the SAMtools analysis suite
 SAMtools is already available on the HMSRC cluster. In order to download,
-install, and run  a  local version for us to modify on the HMSRC login node, we
+install, and run a local version for us to modify on the HMSRC login node, we
 performed the following steps:
 
 ```Bash
@@ -197,7 +197,7 @@ $ make
 $ make install
 ```
 
-All program suit makefiles use the ```-O2``` optimization flag by default.
+All program suite makefiles use the ```-O2``` optimization flag by default.
 We did not update this flag throughout the project.
 
 #### SAMtools & BCFtools Dataflow
@@ -509,7 +509,7 @@ binning from the single-node limited 20 to a theoretical maximum of 640. We only
 went up to 128, but future research will include further expansion and analysis.
 
 We performed the MPI analysis on the Harvard Medical School cluster. As the cluster is
-a shared compute cluster used by thousand of users, we do not have root access to
+a shared compute cluster used by thousands of users, we did not have root access to
 install the packages into the default system file paths for MPI. As such, we built
 a custom environment based on Anaconda.
 
@@ -592,7 +592,7 @@ in idle CPU time as the number of parallel processes increase. By sorting, or "l
 balancing" the data as it is distributed amongst parallel processes, we hope to reduce
 the proportion of CPU idle time and wasted processing power.
 
-Every genome alignment (.bam) file has an accompanying index (.bai) file. This index file does not contain any sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly efficient since an alignment file is typically quite large (for example, our alignment files are ~10GB).
+Every genome alignment (.bam) file has an accompanying index (.bai) file. This index file does not contain any genomic sequence data; it essentially acts like a table of contents for the alignment file. It is typically used to directly jump to specific parts of the alignment file without needing to read the entire fie sequentially, which can be incredibly efficient since an alignment file is typically quite large (for example, our alignment files are ~10GB).
 
 Thus, in principle, by studying the structure of the index file, we should be able
 to smartly and quickly identify the distribution of the heterogeneous data, sort it by chunk size size (smartly binning), distribute the work evenly among processes,
@@ -627,9 +627,9 @@ In order to process the heterogeneous data we developed a load balancing simulat
 (```simulateLoadBalance.py```), batch script, sample input,
 and output timing files are found in the ```load_balance_simulator``` directory.
 
-The load balancing simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keep tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available, and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to do which can be performed in a preset duration of time.
+The load balancing simulator was written in Python with a 'Manager' and 'Worker' object classes. The 'Manager' class controls the overall simulation, keeps tracks of the number of tasks that needs to be done, the global simulation time, the number of workers available, and performs the allocation of the tasks towards each worker. The 'Worker' class simulates each parallel process and is given a task with a defined amount of work to do which can be performed in a preset duration of time.
 
-Using the simulator we can simulate the parallelization process in which each task is passed on to each parallel process. Given the runtimes of each task which we had already collected from our previous parallel runs and tests, we used these to simulate the whole parallelization process and determined (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
+Using the simulator we can simulate the parallelization process in which each task is passed on to each parallel process. We used the runtimes of each task which we had already collected from our previous parallel runs and tests to simulate the whole parallelization process and determined (1) the overall runtime and (2) the idle CPU time of each worker process and (3) the overall amount of wasted computational power, when different number of CPU cores and load balancing strategies are utilized.
 
 We can then apply different load balancing strategies to assess how these different benchmarks change with different load balancing strategies. Specifically, we simulated four different load balancing
 techniques to parallelize the data across a range of cores:
@@ -639,7 +639,7 @@ techniques to parallelize the data across a range of cores:
 3. Random order processing
 4. Ascending data size processing
 
-Briefly, in the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. In the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. The 'Original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'Random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
+Briefly, in the 'descending data size processing' strategy, the biggest sized data was processed first and the smallest sized data was processed last during the parallelization. In the 'ascending data size processing' load balancing strategy, the smallest tasks that required the shortest processing time were processed first and the largest tasks that required the longest processing time were processed last. The 'original data order processing' load balancing strategy processes the data in their original order, regardless of the size and time needed to process these data chunks. The 'random order processing' strategy randomizes the processing of these data chunks. Specifically, three randomizations were performed and the average of each benchmark across the three randomizations computed.
 
 Results for these four sorting techniques are discussed in the "Results" section
 below.
