@@ -970,9 +970,3 @@ https://www.perl.org
 http://search.cpan.org/~dlux/Parallel-ForkManager-0.7.5/ForkManager.pm
 
 ---
-
-**This README is our project website and serves as its final report.**
-
-- Samtools source code is found [here](https://github.com/samtools).
-- Evaluation data, modified source code, simulation and batch scripts, and visualization
-notebooks are all found in this repository
