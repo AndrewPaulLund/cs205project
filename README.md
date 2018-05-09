@@ -921,14 +921,14 @@ We are very happy with the speedup we achieved through binning, MPI, and simulat
 
 #### Lessons Learned
 
-We found that the Samtools package is a large and complex code base which certainly takes much time and expert expertise to fully comprehend. As such, this project that we had defined to parallelize the samtools package is certainly a significant endeavour and perhaps much more than what is typically achievable for a class project. That said, the Samtools package is a very widely utilized package, having received more than 15,000+ citations (https://www.ncbi.nlm.nih.gov/pubmed/19505943). Indeed, we certainly believe that our efforts here to parallelize the package would bring significant general benefits to the community.
+We found that the SAMtools suite is a large and complex code base requiring great time and expertise to fully comprehend. As such, this parallelization project was a significant endeavor and perhaps much more than what is typically achievable for a class project. That said, the SAMtools package is a very widely utilized package, having received more than 15,000+ citations (https://www.ncbi.nlm.nih.gov/pubmed/19505943). Indeed, we certainly believe that our efforts here to parallelize the package would bring significant general benefits to the community.
 
 
 #### Future Work
 
-Having implement these parallization strategies on the samtools package, we intend to apply it to a large dataset. In particular, the methodologies and optimization strategies we outlined here would be applied towards the future analysis of a ~400TB dataset on a supercomputer.
+Having implemented the parallelization strategies above, we intend to apply it to a larger dataset. In particular, the methodologies and optimization strategies we outlined here would be applied towards the future analysis of a ~400TB dataset on a supercomputer.
 
-Though we have difficulties in establishing the reading of the index file structure here in this project, we plan to continue this effort. With this, it should enable us to achieve better and more efficient paralllelization and load balancing.
+Though we had difficulties in establishing the reading of the index file structure here in this project, we plan to continue this effort. With this, it should enable us to achieve better and more efficient parallelization and load balancing.
 
 
 
