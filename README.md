@@ -22,7 +22,7 @@ the genome. The below image illustrates SNPs between three individuals.
 
 ![SNP](report_images/snp.png)
 
-**What are the uses of genomic sequencing?**
+**What is genomic sequencing important?**
 
 Genomic sequencing has many applications in today's world. Some of them are as follows:
 - Very important for extremely rare disorders
@@ -46,7 +46,7 @@ took almost 15 years. Today, it can be done for as low as $1,000 and takes as li
 one week!
 
 The primary overhead for genomic sequencing is now computation. The
-algorithms used are not easily parallelized, and do not scale linearly.
+algorithms used are not easily parallelizable, and do not scale linearly.
 
 <img src="report_images/cost.png" width=500>
 
@@ -54,29 +54,28 @@ algorithms used are not easily parallelized, and do not scale linearly.
 
 ### Need for parallelization in computational analysis of genomic data
 
-Given the huge amount of genomic data being produced today and the huge number
-of individuals being sequenced. For example, both [GenomeAsia100K](http://www.genomeasia100k.com/) and the UK's [National Health
+Today, an ever-increasing number of individuals are getting their genome sequenced, and the amount of genomic data being produced is humongous. For example, both [GenomeAsia100K](http://www.genomeasia100k.com/) and the UK's [National Health
 Service](http://www.sciencemag.org/news/2012/12/uk-unveils-plan-sequence-whole-genomes-100000-patients) are trying to sequence 100,000 individual genomes for
 medical and population studies. For a single individual the genomic data is
-approximately 100-200 GB. The total size of both these project is in the range
-of 1-2 PB and is too large to practically manage on a single machine.
+approximately 100 to 200 GB. The total size of both these project is in the range
+of 1-2 PB and is simply too large to practically manage on a single machine.
 
 Analysis of a single individual's genome can take up to [~10 days](https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/deploying-gatk-best-practices-paper.pdf) on a single threaded process. To analyze 100,000
 such samples, it would take 24,000,000 core hours of computing power, or 2700
 years on a single core. This is obviously impractical to run on a single core,
 hence the need for parallelization.
 
-In clinical applications, this long analysis is too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
+In clinical applications, this long analysis is just too slow. For example, if we could achieve a 100x speedup from parallelization, we reduce the analysis time from 10
 days to 1-2 hours, which in a clinical setting could result in a life saved versus lost.
 
-Given the shear size of the data and computing power required for analysis, we
+Given the sheer size of the data and computing power required for analysis, we
 describe our project as both "Big Data" and "Big Compute."
 
 ---
 
 ### Need for "efficient" parallelization
 
-Parallelization can result in speedup of analysis, but is often in a non-linear
+Parallelization can result in a speedup of analysis, but often in a non-linear
 manner. For example, we may be able to use 10 cores to achieve a 5x speedup. That is why we need to focus on "efficient" parallelization in order to try and achieve a linear speedup and reduce both time and cost. To that end:
 
 1. If the analyses could be completed in-house or on an institutional high-performance computing infrastructure, where the number of nodes is limited and current analysis can take 2-3 months, a more linear speedup of ~20% could result in a time savings of ~2 weeks.
