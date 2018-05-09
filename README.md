@@ -888,8 +888,23 @@ Though we have difficulties in establishing the reading of the index file struct
 ### References
 
 Throughout this report sources are cited through inline links.
+
 They appear in the following order:
-- ADD SOURCES HERE
+https://en.wikipedia.org/wiki/DNA_sequencing
+https://en.wikipedia.org/wiki/Single-nucleotide_polymorphism
+http://www.genomeasia100k.com/
+http://www.sciencemag.org/news/2012/12/uk-unveils-plan-sequence-whole-genomes-100000-patients
+https://www.intel.com/content/dam/www/public/us/en/documents/white-papers/deploying-gatk-best-practices-paper.pdf
+https://cloud.google.com/compute/pricing
+http://www.htslib.org/
+https://github.com/samtools/samtools
+https://github.com/samtools/bcftools
+https://github.com/samtools/htslib
+http://www.internationalgenome.org/
+https://rc.hms.harvard.edu/
+https://sourceware.org/binutils/docs/gprof/
+https://www.perl.org
+http://search.cpan.org/~dlux/Parallel-ForkManager-0.7.5/ForkManager.pm
 
 ---
 
@@ -898,8 +913,3 @@ They appear in the following order:
 - Samtools source code is found [here](https://github.com/samtools).
 - Evaluation data, modified source code, simulation and batch scripts, and visualization
 notebooks are all found in this repository
-
-# TODO:
-- ADD LOAD BALANCING SIMULATOR DESCRIPTION
-- idea of using load balancer to predict how to load balance and different load balancing strategies.
-- talk about the structure of the index file and what data it contains.
